@@ -32,7 +32,7 @@ workflows:
     publishing:
       email:
         recipients:
-          - your-email@example.com
+          - know0088@gmail.com
         notify:
           success: true
           failure: true

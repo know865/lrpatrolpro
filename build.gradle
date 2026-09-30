@@ -8,12 +8,7 @@ buildscript {
     }
 }
 
-allprojects {
-    repositories {
-        google()
-        mavenCentral()
-    }
-}
+// 移除 allprojects { repositories {} }，改由 settings.gradle 統一管理
 
 tasks.register('clean', Delete) {
     delete rootProject.buildDir

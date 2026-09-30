@@ -7,32 +7,39 @@ workflows:
       java: 17
       vars:
         PACKAGE_NAME: "hk.com.lrpatrolpro"
+      # ✅ 新增：Gradle 快取（加速後續建置）
+      gradle: 8.2
     triggering:
       events:
         - push
       branch_patterns:
         - pattern: 'main'
           include: true
+    cache:
+      cache_paths:
+        # ✅ 快取 Gradle 依賴，第二次建置可省 1-2 分鐘
+        - ~/.gradle/caches
+        - ~/.gradle/wrapper
     scripts:
-      - name: 產生 Gradle Wrapper（如尚未存在）
+      - name: 確保 gradlew 可執行
         script: |
-          if [ ! -f gradlew ]; then
-            gradle wrapper --gradle-version 8.2
-          fi
           chmod +x gradlew
+      - name: 清理舊建置（避免殘留）
+        script: |
+          ./gradlew clean
       - name: 建置 Debug APK
         script: |
-          ./gradlew assembleDebug --stacktrace
+          ./gradlew assembleDebug --stacktrace --no-daemon
       - name: 建置 Release APK（未簽章）
         script: |
-          ./gradlew assembleRelease --stacktrace
+          ./gradlew assembleRelease --stacktrace --no-daemon
     artifacts:
       - app/build/outputs/apk/**/*.apk
       - app/build/outputs/logs/**/*.txt
     publishing:
       email:
         recipients:
-          - know0088@gmail.com
+          - your-email@example.com   # ← 記得改成你自己的 Email
         notify:
           success: true
           failure: true

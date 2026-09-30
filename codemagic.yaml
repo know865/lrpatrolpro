@@ -39,7 +39,7 @@ workflows:
     publishing:
       email:
         recipients:
-          - your-email@example.com   # ← 記得改成你自己的 Email
+          - know0088@gmail.com   # ← 記得改成你自己的 Email
         notify:
           success: true
           failure: true

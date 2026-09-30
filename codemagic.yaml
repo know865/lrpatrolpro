@@ -16,14 +16,14 @@ workflows:
     cache:
       cache_paths:
         - ~/.gradle/caches
-        - ~/.gradle/wrapper
     scripts:
-      - name: 確保 gradlew 可執行
+      - name: 產生 Gradle Wrapper（若不存在）
         script: |
+          if [ ! -f gradlew ]; then
+            echo "gradlew 不存在，正在產生..."
+            gradle wrapper --gradle-version 8.2
+          fi
           chmod +x gradlew
-      - name: 清理舊建置
-        script: |
-          ./gradlew clean
       - name: 建置 Debug APK
         script: |
           ./gradlew assembleDebug --stacktrace --no-daemon
@@ -36,7 +36,7 @@ workflows:
     publishing:
       email:
         recipients:
-          - know0088@gmail.com
+          - your-email@example.com
         notify:
           success: true
           failure: true

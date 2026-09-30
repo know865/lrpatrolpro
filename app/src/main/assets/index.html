@@ -1,0 +1,1707 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>LR Patrol Pro · 輕鐵設備巡檢匯報系統</title>
+<style>
+  :root{
+    --mtr-red:#9a0d1e; --mtr-red-dark:#6e0915; --lr-orange:#f7941d;
+    --bg:#f4f6f9; --card:#ffffff; --line:#e3e8ef;
+    --text:#16202c; --sub:#6b7a90;
+    --ok:#0f9d58; --warn:#f4b400; --danger:#db4437; --info:#4285f4;
+    --radius:14px; --shadow:0 2px 10px rgba(20,35,60,.08);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0;height:100%}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang HK","Noto Sans TC","Microsoft JhengHei",sans-serif;
+    background:var(--bg);color:var(--text);
+    display:flex;align-items:center;justify-content:center;min-height:100vh;padding:16px;
+  }
+  .phone{width:390px;height:844px;max-height:96vh;background:#000;border-radius:44px;padding:10px;
+    box-shadow:0 30px 70px rgba(0,0,0,.35),0 0 0 2px #2a2a2a;position:relative;flex-shrink:0}
+  .screen{width:100%;height:100%;background:var(--bg);border-radius:36px;overflow:hidden;
+    position:relative;display:flex;flex-direction:column}
+  .notch{position:absolute;top:10px;left:50%;transform:translateX(-50%);width:120px;height:26px;
+    background:#000;border-radius:0 0 18px 18px;z-index:100}
+  .statusbar{height:44px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;
+    padding:0 22px;font-size:12px;font-weight:700;color:#fff;background:var(--mtr-red);z-index:50}
+  .statusbar .right{display:flex;gap:5px;align-items:center}
+  .batt{width:20px;height:10px;border:1.5px solid currentColor;border-radius:3px;position:relative}
+  .batt::after{content:'';position:absolute;right:-4px;top:2.5px;width:2px;height:4px;background:currentColor;border-radius:0 2px 2px 0}
+  .batt i{display:block;height:100%;width:72%;background:currentColor;border-radius:1px}
+  .content{flex:1;overflow-y:auto;overflow-x:hidden;position:relative;-webkit-overflow-scrolling:touch}
+  .content::-webkit-scrollbar{width:0}
+  .tabbar{flex-shrink:0;height:64px;background:#fff;border-top:1px solid var(--line);display:flex;padding-bottom:6px}
+  .tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+    font-size:10px;color:var(--sub);cursor:pointer;border:none;background:none;font-family:inherit}
+  .tab .ic{font-size:19px;line-height:1}
+  .tab.active{color:var(--mtr-red);font-weight:700}
+  .appbar{flex-shrink:0;background:var(--mtr-red);color:#fff;padding:6px 16px 14px;
+    display:flex;align-items:center;gap:12px;box-shadow:0 2px 8px rgba(154,13,30,.25);z-index:40}
+  .appbar h1{font-size:17px;margin:0;font-weight:700;flex:1}
+  .appbar .sub{font-size:11px;opacity:.8;font-weight:400;display:block;margin-top:1px}
+  .iconbtn{width:34px;height:34px;border-radius:10px;border:none;background:rgba(255,255,255,.16);
+    color:#fff;font-size:16px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;font-family:inherit}
+  .page{padding:14px 14px 24px;animation:fade .22s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  .card{background:var(--card);border-radius:var(--radius);padding:14px;box-shadow:var(--shadow);
+    margin-bottom:12px;border:1px solid rgba(0,0,0,.02)}
+  .card-title{font-size:13px;font-weight:800;color:var(--text);margin:0 0 10px;
+    display:flex;align-items:center;justify-content:space-between}
+  .card-title small{font-size:11px;color:var(--sub);font-weight:500}
+  .muted{color:var(--sub);font-size:12px}
+  .row{display:flex;gap:10px;align-items:center}
+  .row.between{justify-content:space-between}
+  .field{margin-bottom:13px}
+  .field label{display:block;font-size:11.5px;font-weight:700;color:var(--sub);margin-bottom:5px;letter-spacing:.3px}
+  .field label .req{color:var(--danger)}
+  input[type=text],input[type=password],input[type=email],input[type=tel],select,textarea{
+    width:100%;padding:11px 12px;border:1.5px solid var(--line);border-radius:10px;
+    font-size:13.5px;font-family:inherit;background:#fbfcfe;color:var(--text);outline:none;transition:.15s}
+  input:focus,select:focus,textarea:focus{border-color:var(--mtr-red);background:#fff;box-shadow:0 0 0 3px rgba(154,13,30,.08)}
+  textarea{resize:none;min-height:74px;line-height:1.5}
+  select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'><path d='M2 4l4 4 4-4' stroke='%236b7a90' stroke-width='1.6' fill='none' stroke-linecap='round'/></svg>");background-repeat:no-repeat;background-position:right 12px center}
+  .btn{width:100%;padding:13px;border:none;border-radius:11px;font-size:14px;font-weight:700;
+    font-family:inherit;cursor:pointer;background:var(--mtr-red);color:#fff;transition:.15s;
+    display:flex;align-items:center;justify-content:center;gap:7px}
+  .btn:active{transform:scale(.985);background:var(--mtr-red-dark)}
+  .btn.ghost{background:#eef2f7;color:var(--text)}
+  .btn.outline{background:#fff;color:var(--mtr-red);border:1.5px solid var(--mtr-red)}
+  .btn.sm{padding:9px;font-size:12.5px;border-radius:9px}
+  .btn.danger{background:var(--danger)}
+  .btn.ok{background:var(--ok)}
+  .badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:10.5px;font-weight:700;white-space:nowrap}
+  .b-new{background:#e6f0ff;color:#1a63d8}
+  .b-prog{background:#fff4dd;color:#b57a00}
+  .b-done{background:#e3f7ea;color:#0b7a44}
+  .b-crit{background:#fde8e6;color:#c62828}
+  .b-high{background:#fff0e0;color:#c25e00}
+  .b-med{background:#eaf3ff;color:#1565c0}
+  .b-low{background:#eef1f5;color:#5a6a80}
+  .b-wait{background:#fff4dd;color:#8a6300}
+  .b-sent{background:#e3f7ea;color:#0b7a44}
+  .list-item{display:flex;gap:11px;padding:11px 0;border-bottom:1px solid var(--line);align-items:flex-start;cursor:pointer}
+  .list-item:last-child{border-bottom:none;padding-bottom:0}
+  .li-ico{width:38px;height:38px;border-radius:11px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:17px;background:#f0f3f8}
+  .li-body{flex:1;min-width:0}
+  .li-title{font-size:13px;font-weight:700;margin:0 0 3px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+  .li-sub{font-size:11px;color:var(--sub);margin:0;line-height:1.45}
+  .li-meta{font-size:10px;color:#95a3b8;margin-top:4px;display:flex;gap:8px;flex-wrap:wrap}
+  .stats{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:12px}
+  .stat{background:#fff;border-radius:13px;padding:13px;box-shadow:var(--shadow);border-left:3.5px solid var(--info)}
+  .stat.s2{border-left-color:var(--warn)}
+  .stat.s3{border-left-color:var(--ok)}
+  .stat.s4{border-left-color:var(--danger)}
+  .stat .n{font-size:23px;font-weight:800;line-height:1;letter-spacing:-.5px}
+  .stat .l{font-size:10.5px;color:var(--sub);margin-top:5px;font-weight:600}
+  .photo-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+  .photo-slot{aspect-ratio:1;border-radius:11px;border:1.8px dashed #c3cede;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;gap:3px;font-size:9px;color:var(--sub);cursor:pointer;background:#fafcff;font-weight:600;position:relative}
+  .photo-slot.filled{border-style:solid;border-color:transparent;background:linear-gradient(135deg,#cfd8e3,#aab8c9)}
+  .photo-slot.filled::after{content:'✓';position:absolute;top:3px;right:3px;width:15px;height:15px;background:var(--ok);color:#fff;border-radius:50%;font-size:9px;display:flex;align-items:center;justify-content:center}
+  .photo-slot .big{font-size:19px;line-height:1}
+  .progress{height:7px;background:#e8edf4;border-radius:6px;overflow:hidden;margin-top:8px}
+  .progress i{display:block;height:100%;background:linear-gradient(90deg,var(--mtr-red),var(--lr-orange));border-radius:6px;transition:width .5s}
+  .login-wrap{flex:1;display:flex;flex-direction:column;justify-content:center;padding:30px 26px;
+    background:linear-gradient(165deg,#9a0d1e 0%,#6e0915 55%,#3d0510 100%);position:relative;overflow:hidden}
+  .login-wrap::before{content:'';position:absolute;width:300px;height:300px;border-radius:50%;
+    background:rgba(247,148,29,.16);top:-110px;right:-110px}
+  .login-wrap::after{content:'';position:absolute;width:220px;height:220px;border-radius:50%;
+    background:rgba(255,255,255,.05);bottom:-80px;left:-70px}
+  .logo-box{text-align:center;margin-bottom:28px;position:relative;z-index:2}
+  .logo-mark{width:74px;height:74px;border-radius:22px;margin:0 auto 14px;background:linear-gradient(140deg,#f7941d,#e0620d);
+    display:flex;align-items:center;justify-content:center;font-size:34px;box-shadow:0 10px 26px rgba(247,148,29,.4)}
+  .logo-box h2{color:#fff;font-size:21px;margin:0 0 5px;font-weight:800;letter-spacing:.4px}
+  .logo-box p{color:rgba(255,255,255,.72);font-size:11.5px;margin:0;letter-spacing:.5px}
+  .login-card{background:rgba(255,255,255,.98);border-radius:20px;padding:22px 18px;box-shadow:0 18px 44px rgba(0,0,0,.3);position:relative;z-index:2}
+  .login-card h3{font-size:15px;margin:0 0 16px;font-weight:800}
+  .hint{background:#fff8e6;border:1px solid #ffe2a8;color:#8a6300;padding:9px 11px;border-radius:9px;font-size:10.5px;line-height:1.6;margin-top:12px}
+  .seg{display:flex;background:#eaEEF4;border-radius:11px;padding:3px;margin-bottom:13px;gap:3px}
+  .seg button{flex:1;padding:9px;border:none;background:none;border-radius:9px;font-size:12px;font-weight:700;font-family:inherit;color:var(--sub);cursor:pointer;transition:.15s}
+  .seg button.on{background:#fff;color:var(--mtr-red);box-shadow:0 1px 5px rgba(0,0,0,.1)}
+  .dept-node{border-left:2.5px solid var(--line);margin-left:9px;padding-left:12px;margin-bottom:9px}
+  .dept-head{display:flex;align-items:center;justify-content:space-between;background:#f7f9fc;border-radius:10px;padding:10px 12px;cursor:pointer}
+  .dept-head.on{background:#fdeef0;border:1px solid #f6ccd1}
+  .dept-head b{font-size:12.5px}
+  .dept-head .code{font-size:10px;font-weight:800;background:var(--mtr-red);color:#fff;padding:2px 7px;border-radius:5px;margin-right:7px;letter-spacing:.5px}
+  .dept-head .code.grey{background:#8d9bb0}
+  .switch{position:relative;width:44px;height:25px;flex-shrink:0}
+  .switch input{opacity:0;width:0;height:0}
+  .slider{position:absolute;inset:0;background:#cfd8e3;border-radius:25px;transition:.25s;cursor:pointer}
+  .slider::before{content:'';position:absolute;width:19px;height:19px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.25s;box-shadow:0 1px 4px rgba(0,0,0,.2)}
+  input:checked + .slider{background:var(--ok)}
+  input:checked + .slider::before{transform:translateX(19px)}
+  .toolrow{display:flex;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid var(--line);cursor:pointer}
+  .toolrow:last-child{border-bottom:none}
+  .toolrow .ic{width:38px;height:38px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:17px;background:#f0f3f8;flex-shrink:0}
+  .toolrow .tx{flex:1}
+  .toolrow .tx b{display:block;font-size:13px;margin-bottom:2px}
+  .toolrow .tx span{font-size:10.5px;color:var(--sub)}
+  .chev{color:#c3cede;font-size:17px}
+  .toast{position:absolute;bottom:88px;left:50%;transform:translateX(-50%) translateY(20px);
+    background:rgba(22,32,44,.94);color:#fff;padding:11px 18px;border-radius:11px;font-size:12px;font-weight:600;
+    opacity:0;transition:.3s;pointer-events:none;z-index:200;white-space:nowrap;max-width:88%;text-align:center}
+  .toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+  .sheet-bg{position:absolute;inset:0;background:rgba(10,18,30,.45);opacity:0;pointer-events:none;transition:.25s;z-index:150;border-radius:36px}
+  .sheet-bg.on{opacity:1;pointer-events:auto}
+  .sheet{position:absolute;left:0;right:0;bottom:0;background:#fff;border-radius:22px 22px 0 0;padding:18px 16px 26px;
+    transform:translateY(102%);transition:.3s cubic-bezier(.3,0,.2,1);z-index:160;max-height:78%;overflow-y:auto}
+  .sheet.on{transform:translateY(0)}
+  .sheet .grab{width:38px;height:4px;background:#dde3ec;border-radius:4px;margin:0 auto 15px}
+  .sheet h3{margin:0 0 14px;font-size:15px;font-weight:800}
+  .viewer{position:absolute;inset:0;background:#0b0f16;z-index:180;display:none;flex-direction:column;border-radius:36px;overflow:hidden}
+  .viewer.on{display:flex}
+  .viewer .top{padding:52px 16px 12px;display:flex;align-items:center;gap:10px;color:#fff}
+  .viewer .top b{flex:1;font-size:13px}
+  .viewer .img{flex:1;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#2a3240,#151a22);
+    margin:0 16px;border-radius:14px;color:#4d5a6d;font-size:13px;font-weight:600;flex-direction:column;gap:8px}
+  .viewer .img .ph{font-size:46px}
+  .viewer .bot{padding:16px;color:#8b98ab;font-size:11px;text-align:center;line-height:1.6}
+  .empty{text-align:center;padding:36px 20px;color:var(--sub)}
+  .empty .e-ic{font-size:40px;opacity:.35;margin-bottom:10px}
+  .empty b{display:block;font-size:13px;color:var(--text);margin-bottom:4px}
+  .empty span{font-size:11.5px;line-height:1.6}
+  .divider{height:1px;background:var(--line);margin:10px 0}
+  .kv{display:flex;justify-content:space-between;padding:7px 0;font-size:12px;border-bottom:1px dashed var(--line)}
+  .kv:last-child{border-bottom:none}
+  .kv span:first-child{color:var(--sub);font-weight:600}
+  .kv span:last-child{font-weight:700;text-align:right;max-width:62%}
+  .pill{display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;background:#eef2f7;color:var(--sub);margin:2px 3px 0 0}
+
+  .zone-tabs{display:flex;gap:7px;overflow-x:auto;padding:0 0 12px;
+    margin:0 -14px;padding-left:14px;padding-right:14px;scrollbar-width:none}
+  .zone-tabs::-webkit-scrollbar{display:none}
+  .zone-tab{flex-shrink:0;padding:9px 14px;border-radius:22px;
+    border:1.5px solid var(--line);background:#fff;
+    font-size:12px;font-weight:800;font-family:inherit;cursor:pointer;
+    display:flex;align-items:center;gap:6px;color:var(--text);transition:.18s;letter-spacing:.3px}
+  .zone-tab:active{transform:scale(.96)}
+  .zone-tab.on{background:var(--mtr-red);color:#fff;border-color:var(--mtr-red);
+    box-shadow:0 4px 12px rgba(154,13,30,.28)}
+  .zone-tab .cnt{background:rgba(0,0,0,.07);border-radius:10px;padding:1px 7px;
+    font-size:10.5px;font-weight:800;color:var(--sub)}
+  .zone-tab.on .cnt{background:rgba(255,255,255,.25);color:#fff}
+  .zone-header{display:flex;align-items:center;justify-content:space-between;
+    padding:10px 14px;border-radius:13px;margin-bottom:12px;
+    background:linear-gradient(135deg,#fdeef0,#fef5e7);border:1px solid #f6ccd1}
+  .zone-header .zh-name{font-size:15px;font-weight:800;letter-spacing:.5px}
+  .zone-header .zh-meta{font-size:10.5px;color:var(--sub);font-weight:700;margin-top:2px}
+  .zone-header .zh-icon{width:42px;height:42px;border-radius:12px;background:#fff;
+    display:flex;align-items:center;justify-content:center;font-size:22px;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+
+  .st-card{background:#fff;border-radius:14px;padding:12px 13px 10px;margin-bottom:10px;
+    box-shadow:0 2px 8px rgba(20,35,60,.06);border:1px solid rgba(0,0,0,.03)}
+  .st-head{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+  .st-num{font-size:11px;font-weight:800;letter-spacing:.6px;background:#fdeef0;color:var(--mtr-red);
+    padding:4px 9px;border-radius:6px;border:1px solid #f6ccd1;
+    font-family:'SF Mono','Menlo','Consolas',monospace;flex-shrink:0}
+  .st-name{font-size:14px;font-weight:800;color:var(--text);letter-spacing:.2px;
+    display:flex;align-items:center;gap:6px;flex:1;min-width:0}
+  .st-code{font-size:9.5px;font-weight:700;letter-spacing:.5px;background:#f0f3f8;color:var(--sub);
+    padding:2px 6px;border-radius:5px}
+  .station-mark-btn{
+    padding:6px 11px;border-radius:8px;
+    border:1.5px solid #c3cede;background:#fff;
+    color:var(--sub);font-size:10.5px;font-weight:800;
+    font-family:inherit;cursor:pointer;transition:.15s;
+    display:flex;align-items:center;gap:4px;white-space:nowrap;flex-shrink:0;
+  }
+  .station-mark-btn:active{transform:scale(.95)}
+  .station-mark-btn.on{
+    border-color:var(--ok);background:var(--ok);color:#fff;
+    box-shadow:0 2px 6px rgba(15,157,88,.3);
+  }
+
+  .plat-row{
+    display:flex;align-items:center;gap:8px;
+    padding:9px 11px;border-radius:10px;
+    border:1.5px solid var(--line);background:#fbfcfe;
+    transition:.15s;cursor:pointer;margin-bottom:6px;
+  }
+  .plat-row:last-child{margin-bottom:0}
+  .plat-row:active{opacity:.7}
+  .plat-row.has-report{border-color:#f4b400;background:#fff8e6}
+  .plat-row.has-crit{border-color:#db4437;background:#fde8e6}
+  .plat-row.checked{border-color:var(--ok);background:#e3f7ea}
+  .plat-body{flex:1;display:flex;align-items:center;gap:7px;min-width:0}
+  .plat-label{
+    font-size:12.5px;font-weight:800;color:var(--text);
+    display:flex;align-items:center;gap:7px;flex:1;min-width:0;
+  }
+  .plat-row.has-report .plat-label{color:#8a6300}
+  .plat-row.has-crit .plat-label{color:#a01a10}
+  .plat-row.checked .plat-label{color:var(--ok)}
+  .plat-dot{width:8px;height:8px;border-radius:50%;background:#cbd5e1;flex-shrink:0;
+    box-shadow:0 0 0 2px #fff}
+  .plat-row.has-report .plat-dot{background:#f4b400}
+  .plat-row.has-crit .plat-dot{background:#db4437}
+  .plat-row.checked .plat-dot{background:var(--ok)}
+  .plat-cnt{
+    background:var(--mtr-red);color:#fff;
+    min-width:18px;height:18px;border-radius:9px;
+    font-size:10px;font-weight:800;
+    display:flex;align-items:center;justify-content:center;
+    padding:0 5px;flex-shrink:0;
+  }
+  .plat-row.checked .plat-cnt{background:var(--ok)}
+  .plat-arrow{color:#c3cede;font-size:14px;flex-shrink:0}
+
+  .platform-opt{padding:11px 10px;border-radius:11px;cursor:pointer;
+    border:1.6px solid var(--line);background:#fbfcfe;text-align:center;transition:.15s}
+  .platform-opt.on{border-color:var(--mtr-red);background:#fdeef0;box-shadow:0 2px 8px rgba(154,13,30,.12)}
+  .platform-opt b{font-size:13px;font-weight:800;display:block;margin-bottom:2px}
+  .platform-opt.on b{color:var(--mtr-red)}
+  .platform-opt small{font-size:10px;color:var(--sub);font-weight:600}
+
+  .junc-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+  .junc-card{background:#fff;border-radius:12px;padding:12px 10px;
+    box-shadow:0 2px 8px rgba(20,35,60,.06);border:1.5px solid var(--line);
+    cursor:pointer;transition:.15s;position:relative}
+  .junc-card:active{transform:scale(.97)}
+  .junc-card .jc-name{font-size:14px;font-weight:800;letter-spacing:.3px;margin-bottom:5px;
+    display:flex;align-items:center;gap:6px}
+  .junc-card .jc-name::before{content:'🚦';font-size:13px}
+  .junc-card .jc-status{font-size:10.5px;font-weight:700;color:var(--sub);
+    display:flex;align-items:center;gap:4px}
+  .junc-card.checked{border-color:var(--ok);background:#f2fbf6}
+  .junc-card.checked .jc-status{color:var(--ok)}
+  .junc-card.checked .jc-name::after{content:'✓';position:absolute;top:8px;right:10px;
+    width:18px;height:18px;background:var(--ok);color:#fff;border-radius:50%;
+    font-size:11px;display:flex;align-items:center;justify-content:center;font-weight:800}
+
+  .zone-stat{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+  .zs-item{background:#fff;border-radius:12px;padding:11px 8px;text-align:center;
+    box-shadow:0 2px 6px rgba(20,35,60,.05);border:1px solid rgba(0,0,0,.03)}
+  .zs-item .n{font-size:19px;font-weight:800;line-height:1;letter-spacing:-.5px}
+  .zs-item .l{font-size:10px;color:var(--sub);margin-top:4px;font-weight:700}
+
+  .patrol-section{background:#fff;border-radius:14px;padding:14px;box-shadow:var(--shadow);
+    margin-bottom:12px;border:1px solid rgba(0,0,0,.03)}
+  .patrol-section .ps-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+  .patrol-section .ps-title{font-size:14px;font-weight:800;display:flex;align-items:center;gap:7px}
+  .patrol-section .ps-pct{font-size:16px;font-weight:800}
+  .patrol-section .ps-bar{height:8px;background:#e8edf4;border-radius:6px;overflow:hidden;margin-bottom:11px}
+  .patrol-section .ps-bar i{display:block;height:100%;border-radius:6px;transition:width .5s}
+  .ps-done-list, .ps-undone-list{padding:8px 0}
+  .ps-list-label{font-size:10.5px;font-weight:800;letter-spacing:.5px;
+    display:flex;align-items:center;gap:5px;margin-bottom:6px;color:var(--sub)}
+  .ps-list-label .dot{width:7px;height:7px;border-radius:50%}
+  .ps-chips{display:flex;flex-wrap:wrap;gap:5px}
+  .ps-chip{padding:5px 10px;border-radius:8px;font-size:11px;font-weight:800;
+    background:#f0f3f8;color:var(--text);border:1px solid #e2e8f0;
+    font-family:'SF Mono','Menlo','Consolas',monospace;letter-spacing:.6px;cursor:pointer}
+  .ps-chip.ok{background:#e3f7ea;color:#0b7a44;border-color:#c6e9d4}
+  .ps-chip.miss{background:#fde8e6;color:#a01a10;border-color:#f5c6c0}
+  .ps-chip.junc{font-family:inherit;letter-spacing:normal;font-size:10.5px}
+  .ps-chip.junc.ok{background:#e3f7ea}
+  .ps-chip.junc.miss{background:#fff4dd;color:#8a6300;border-color:#ffe2a8}
+
+  .step-badge{
+    display:inline-flex;align-items:center;justify-content:center;
+    width:22px;height:22px;border-radius:50%;
+    background:var(--mtr-red);color:#fff;
+    font-size:11px;font-weight:800;margin-right:8px;flex-shrink:0;
+  }
+  .eq-opt, .dept-opt{
+    padding:11px 9px;border-radius:11px;cursor:pointer;text-align:center;
+    border:1.6px solid var(--line);background:#fbfcfe;transition:.15s;
+  }
+  .eq-opt.on{border-color:var(--mtr-red);background:#fdeef0}
+  .dept-opt{padding:10px 4px}
+  .dept-opt.on{border-color:var(--mtr-red);background:#fdeef0}
+  .dept-opt b{font-size:12.5px;font-weight:800;color:var(--text);display:block}
+  .dept-opt.on b{color:var(--mtr-red)}
+  .eq-opt .eq-icon{font-size:19px;margin-bottom:4px}
+  .eq-opt .eq-name{font-size:10.5px;font-weight:700;line-height:1.3}
+</style>
+</head>
+<body>
+
+<div class="phone">
+  <div class="notch"></div>
+  <div class="screen">
+    <div class="statusbar" id="statusbar">
+      <span>09:41</span>
+      <span class="right">▮▮▮ 📶 <span class="batt"><i></i></span></span>
+    </div>
+    <div class="content" id="content"></div>
+    <div id="tabbarHost"></div>
+    <div class="toast" id="toast"></div>
+    <div class="sheet-bg" id="sheetBg" onclick="closeSheet()"></div>
+    <div class="sheet" id="sheet"></div>
+    <div class="viewer" id="viewer">
+      <div class="top">
+        <button class="iconbtn" onclick="document.getElementById('viewer').classList.remove('on')">✕</button>
+        <b id="viewerTitle">相片</b>
+      </div>
+      <div class="img"><div class="ph">🖼️</div><span id="viewerHint">現場相片預覽</span></div>
+      <div class="bot" id="viewerMeta">拍攝時間 / GPS 座標將寫入匯出記錄</div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* =========================================================
+   LR Patrol Pro · 資料層
+   ========================================================= */
+const STATION_NUMS = {
+  '屯門碼頭':'S001','美樂':'S010','蝴蝶':'S015','輕鐵車廠':'S020','龍門':'S030',
+  '兆禧':'S240','海皇路':'S250','豐景園':'S260','兆麟':'S265',
+  '青山村':'S040','青雲':'S050',
+  '建安':'S060','河田':'S070','蔡意橋':'S075',
+  '山景(北)':'S180','山景(南)':'S190','鳴琴':'S200','石排':'S170',
+  '安定':'S270','友愛':'S275','市中心':'S280','屯門':'S280',
+  '杯渡':'S300','何福堂':'S310','三聖':'S920',
+  '澤豐':'S080','銀圍':'S230','景峰':'S330','新墟':'S320',
+  '屯門醫院':'S090','兆康':'S100','麒麟':'S110','青松':'S120','建生':'S130',
+  '田景':'S140','良景':'S150','新圍':'S160','鳳地':'S340',
+  '藍地':'S350','泥圍':'S360','鍾屋村':'S370','洪水橋':'S380','洪天路緊急月台':'S380',
+  '塘坊村':'S390','屏山':'S400','水邊圍':'S560','豐年路':'S570',
+  '康樂路':'S580','大棠路':'S590','元朗':'S600',
+  '坑尾村':'S425','天水圍':'S430','天慈':'S435','天耀':'S445','樂湖':'S448',
+  '天湖':'S450','銀座':'S455','天瑞':'S460','翠湖':'S490','天榮':'S500',
+  '頌富':'S468','天富':'S480','天悅':'S510','天秀':'S520',
+  '濕地公園':'S530','天恒':'S540','天逸':'S550',
+};
+
+const DB = {
+  users:[
+    {id:1,user:'admin',pwd:'admin123',name:'系統管理員',role:'admin',dept:'IECC',email:'admin@lr.com.hk'},
+    {id:2,user:'chan',pwd:'123456',name:'陳大文',role:'supervisor',dept:'BM',email:'chan@lr.com.hk'},
+  ],
+  zones:[
+    {id:1, name:'碼頭區',    icon:'⚓', from:'#e3f2fd', to:'#bbdefb'},
+    {id:2, name:'市中心區',  icon:'🏙️', from:'#fff8e1', to:'#ffecb3'},
+    {id:3, name:'兆康區',    icon:'🏘️', from:'#f3e5f5', to:'#e1bee7'},
+    {id:4, name:'元朗區',    icon:'🌾', from:'#e8f5e9', to:'#c8e6c9'},
+    {id:5, name:'天水圍區',  icon:'🏞️', from:'#fce4ec', to:'#f8bbd0'},
+  ],
+  stations:[
+    {id:1, code:'TUM', name:'屯門碼頭', zone:1},{id:2, code:'MEL', name:'美樂', zone:1},
+    {id:3, code:'BUT', name:'蝴蝶', zone:1},{id:4, code:'LRD', name:'輕鐵車廠', zone:1},
+    {id:5, code:'LUM', name:'龍門', zone:1},{id:6, code:'SIH', name:'兆禧', zone:1},
+    {id:7, code:'HWR', name:'海皇路', zone:1},{id:8, code:'GVG', name:'豐景園', zone:1},
+    {id:9, code:'SIU', name:'兆麟', zone:1},{id:10,code:'TSC', name:'青山村', zone:1},
+    {id:11,code:'TSW', name:'青雲', zone:1},
+    {id:12,code:'KOA', name:'建安', zone:2},{id:13,code:'HOT', name:'河田', zone:2},
+    {id:14,code:'CYB', name:'蔡意橋', zone:2},{id:15,code:'SKN', name:'山景(北)', zone:2},
+    {id:16,code:'SKS', name:'山景(南)', zone:2},{id:17,code:'MIK', name:'鳴琴', zone:2},
+    {id:18,code:'SHP', name:'石排', zone:2},{id:19,code:'OTM', name:'安定', zone:2},
+    {id:20,code:'YOI', name:'友愛', zone:2},{id:21,code:'TWC', name:'市中心', zone:2},
+    {id:22,code:'TUN', name:'屯門', zone:2},{id:23,code:'PUT', name:'杯渡', zone:2},
+    {id:24,code:'HFT', name:'何福堂', zone:2},{id:25,code:'SSH', name:'三聖', zone:2},
+    {id:26,code:'CFF', name:'澤豐', zone:3},{id:27,code:'THN', name:'大興(北)', zone:3},
+    {id:28,code:'THS', name:'大興(南)', zone:3},{id:29,code:'NGW', name:'銀圍', zone:3},
+    {id:30,code:'KIF', name:'景峰', zone:3},{id:31,code:'SAS', name:'新墟', zone:3},
+    {id:32,code:'TMH', name:'屯門醫院', zone:3},{id:33,code:'SIK', name:'兆康', zone:3},
+    {id:34,code:'KIL', name:'麒麟', zone:3},{id:35,code:'CSC', name:'青松', zone:3},
+    {id:36,code:'KIS', name:'建生', zone:3},{id:37,code:'TIK', name:'田景', zone:3},
+    {id:38,code:'LEK', name:'良景', zone:3},{id:39,code:'SWA', name:'新圍', zone:3},
+    {id:40,code:'FUN', name:'鳳地', zone:3},{id:41,code:'LAT', name:'藍地', zone:3},
+    {id:42,code:'NAW', name:'泥圍', zone:3},{id:43,code:'CUT', name:'鍾屋村', zone:3},
+    {id:44,code:'HSK', name:'洪水橋', zone:3},{id:45,code:'HTL', name:'洪天路緊急月台', zone:3},
+    {id:46,code:'TFT', name:'塘坊村', zone:4},{id:47,code:'PIS', name:'屏山', zone:4},
+    {id:48,code:'SPW', name:'水邊圍', zone:4},{id:49,code:'FNR', name:'豐年路', zone:4},
+    {id:50,code:'HLR', name:'康樂路', zone:4},{id:51,code:'TTR', name:'大棠路', zone:4},
+    {id:52,code:'YUL', name:'元朗', zone:4},
+    {id:53,code:'HTS', name:'坑尾村', zone:5},{id:54,code:'TSW2',name:'天水圍', zone:5},
+    {id:55,code:'TIZ', name:'天慈', zone:5},{id:56,code:'TIY', name:'天耀', zone:5},
+    {id:57,code:'LOW', name:'樂湖', zone:5},{id:58,code:'TIW', name:'天湖', zone:5},
+    {id:59,code:'GIN', name:'銀座', zone:5},{id:60,code:'TIS', name:'天瑞', zone:5},
+    {id:61,code:'TSW3',name:'翠湖', zone:5},{id:62,code:'TIWR',name:'天榮', zone:5},
+    {id:63,code:'CHF', name:'頌富', zone:5},{id:64,code:'TIF', name:'天富', zone:5},
+    {id:65,code:'TIYUE',name:'天悅', zone:5},{id:66,code:'TISA',name:'天秀', zone:5},
+    {id:67,code:'WEP', name:'濕地公園', zone:5},{id:68,code:'TIH', name:'天恒', zone:5},
+    {id:69,code:'TIYAT',name:'天逸', zone:5},
+  ],
+  junctions:[
+    ...['J1','J2','J3','J4','Mj1','Mn1','Mn2','Mn3','Mn4','Mn46','Mn5','PHJ'].map(id=>({id,zone:1})),
+    ...['CYB','J5','J7','Mj3','Mj4','Mj6','Mn17','Mn53'].map(id=>({id,zone:2})),
+    ...['J8','J9','Mj10','Mj13','Mj5','Mj9','Mn10','Mn19','Mn21','Mn25','Mn26','Mn27',
+        'Mn28','Mn30','Mn31','Mn32','Mn33','Mn34','Mn35','Mn37','Mn38','Mn39','Mn40',
+        'Mn48','Mn6','Mn7','Mn8','Mn9'].map(id=>({id,zone:3})),
+    ...['Mj14','Mj15','Mj16','Mj17','Mj18','Mj19','Mj20','Mj21','Mn42','Mn43','Mn44',
+        'Mn45','Mn54','T23'].map(id=>({id,zone:4})),
+    ...['A10','A13','A17','A2','A25','A30','A32','A4','A7','B','E','G','Hx','I','J',
+        'L1','L2','M','Q','R1','R2','S','V1'].map(id=>({id,zone:5})),
+  ],
+  equipments:[
+    {id:1,code:'PLT',name:'月台設備',icon:'🚉'},
+    {id:2,code:'TVM',name:'售票機設備',icon:'🎫'},
+    {id:3,code:'PTP',name:'八達通PTP設備',icon:'💳'},
+    {id:4,code:'LGT',name:'燈光設備',icon:'💡'},
+    {id:5,code:'ADB',name:'廣告燈箱設備',icon:'🪧'},
+    {id:6,code:'PIB',name:'月台資訊板',icon:'📋'},
+    {id:7,code:'PIDS',name:'電子列車資訊牌(PIDS)',icon:'📺'},
+    {id:8,code:'LFT',name:'升降機/扶手電梯',icon:'🛗'},
+    {id:9,code:'CCTV',name:'閉路電視系統',icon:'📹'},
+    {id:10,code:'PAS',name:'廣播系統',icon:'📢'},
+  ],
+  departments:[
+    {id:1,code:'BM',name:'建築維修部 (Building Maintenance)',parent:null,email:'bm@lr.com.hk',cc:''},
+    {id:2,code:'SBM',name:'訊號及建築維修部',parent:null,email:'sbm@lr.com.hk',cc:''},
+    {id:3,code:'SPO',name:'站務營運部',parent:null,email:'spo@lr.com.hk',cc:''},
+    {id:4,code:'IECC',name:'鐵路設施控制中心',parent:null,email:'iecc@lr.com.hk',cc:''},
+    {id:5,code:'CIV',name:'Civil (土木結構)',parent:4,email:'civil@lr.com.hk',cc:'iecc@lr.com.hk'},
+    {id:6,code:'PWY',name:'P-way (軌道工程)',parent:4,email:'pway@lr.com.hk',cc:'iecc@lr.com.hk'},
+    {id:7,code:'RRU',name:'RRU (無線電通訊)',parent:4,email:'rru@lr.com.hk',cc:'iecc@lr.com.hk'},
+    {id:8,code:'SIG',name:'Signal (訊號系統)',parent:4,email:'signal@lr.com.hk',cc:'iecc@lr.com.hk'},
+    {id:9,code:'ELE',name:'Electrical (電力)',parent:4,email:'elec@lr.com.hk',cc:'iecc@lr.com.hk'},
+  ],
+  reports:[
+    {id:1,no:'RPT-20260214-001',stationId:1,platform:1,loc:'1號月台往屯門方向',eqId:7,deptId:5,
+      desc:'PIDS 顯示屏右半邊出現橫紋並閃爍，未能正常顯示列車到站時間。',sev:'High',status:'New',
+      by:'陳大文',at:'2026-02-14 08:32',lat:22.37231,lng:113.96624,photos:2,exported:false,exportedAt:null},
+    {id:2,no:'RPT-20260214-002',stationId:21,platform:1,loc:'A 出口廣告燈箱',eqId:5,deptId:1,
+      desc:'廣告燈箱內部光管損壞，下半部分完全不亮，外殼有輕微滲水。',sev:'Medium',status:'InProgress',
+      by:'陳大文',at:'2026-02-14 09:15',lat:22.40182,lng:113.98983,photos:3,exported:true,exportedAt:'2026-02-14 10:20'},
+    {id:3,no:'RPT-20260213-007',stationId:33,platform:2,loc:'2號月台',eqId:3,deptId:8,
+      desc:'八達通 PTP 拍卡感應遲緩，需反覆拍卡 3-4 次才成功。',sev:'Critical',status:'InProgress',
+      by:'李小明',at:'2026-02-13 18:47',lat:22.45852,lng:114.02947,photos:1,exported:false,exportedAt:null},
+    {id:4,no:'RPT-20260213-006',stationId:52,platform:1,loc:'元朗站大堂',eqId:1,deptId:1,
+      desc:'月台座椅螺絲鬆脫，椅面搖晃，有安全隱患。',sev:'Low',status:'Fixed',
+      by:'陳大文',at:'2026-02-13 14:20',lat:22.48523,lng:114.04821,photos:2,exported:true,exportedAt:'2026-02-13 16:30'},
+    {id:5,no:'RPT-20260212-003',stationId:6,platform:1,loc:'往屯門碼頭方向',eqId:4,deptId:9,
+      desc:'月台 3 號燈柱照明閃爍不定，夜間影響乘客上落車視線。',sev:'Medium',status:'Closed',
+      by:'王美儀',at:'2026-02-12 20:05',lat:22.37524,lng:113.96951,photos:2,exported:true,exportedAt:'2026-02-13 09:00'},
+  ],
+  patrolRecords:{
+    platforms:{
+      '1-1':'2026-02-14','1-2':'2026-02-14','2-1':'2026-02-14','2-2':'2026-02-14',
+      '3-1':'2026-02-13','3-2':'2026-02-13','4-1':'2026-02-13','4-2':'2026-02-13',
+      '21-1':'2026-02-14','21-2':'2026-02-14','33-1':'2026-02-13','33-2':'2026-02-13',
+    },
+    junctions:{
+      'J1':'2026-02-14','J2':'2026-02-14','Mj1':'2026-02-13',
+      'CYB':'2026-02-14','J5':'2026-02-13',
+      'J8':'2026-02-12','Mn6':'2026-02-14',
+      'Mj14':'2026-02-10','T23':'2026-02-14',
+      'A10':'2026-02-14','B':'2026-02-13','R1':'2026-02-11',
+    },
+  },
+  settings:{autoGps:true,autoUpload:false,compressPhoto:true,photoQuality:'中 (1280×720)',theme:'跟隨系統'}
+};
+
+const S = {
+  loggedIn:false,currentUser:null,tab:'home',page:null,pageParam:null,
+  reportFilter:'all',selectedDept:null,selectedEq:null,selectedStation:null,
+  selectedZone:1,formPhotos:0,formPlatform:1,formSev:'Medium',
+  formLoc:'', formDesc:'', formStation:1, formSubId:null,
+  stationViewMode:'platform',
+  patrolViewMode:'platform',
+};
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const eqById = id => DB.equipments.find(e=>e.id===id)||{name:'—',icon:'❓'};
+const stById = id => DB.stations.find(s=>s.id===id)||{name:'—',code:'—',zone:0};
+const znById = id => DB.zones.find(z=>z.id===id)||{name:'—',icon:'📍'};
+const dpById = id => DB.departments.find(d=>d.id===id)||{name:'—',code:'—',email:'—'};
+const sevClass = s => ({'Critical':'b-crit','High':'b-high','Medium':'b-med','Low':'b-low'}[s]||'b-low');
+const statusClass = s => ({'New':'b-new','InProgress':'b-prog','Fixed':'b-done','Closed':'b-done'}[s]||'b-new');
+const statusText = s => ({'New':'待跟進','InProgress':'處理中','Fixed':'已修復','Closed':'已結案'}[s]||s);
+
+function stationNum(sid){
+  const s = DB.stations.find(x=>x.id===sid);
+  if(!s) return '—';
+  return STATION_NUMS[s.name] || 'S---';
+}
+
+function today(){const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
+function getWeekStart(){const now=new Date();const day=now.getDay();const diff=day===0?6:day-1;
+  const mon=new Date(now);mon.setDate(now.getDate()-diff);mon.setHours(0,0,0,0);return mon;}
+function getMonthStart(){const now=new Date();return new Date(now.getFullYear(),now.getMonth(),1);}
+function isThisWeek(dateStr){if(!dateStr)return false;const d=new Date(dateStr);return d>=getWeekStart();}
+function isThisMonth(dateStr){if(!dateStr)return false;const d=new Date(dateStr);return d>=getMonthStart();}
+
+function lastPlatformPatrol(sid,plat){return DB.patrolRecords.platforms[sid+'-'+plat]||null;}
+function isPlatformCheckedThisWeek(sid,plat){return isThisWeek(lastPlatformPatrol(sid,plat));}
+function isStationCheckedThisWeek(sid){
+  return isPlatformCheckedThisWeek(sid,1) && isPlatformCheckedThisWeek(sid,2);
+}
+function lastJunctionPatrol(jid){return DB.patrolRecords.junctions[jid]||null;}
+function isJunctionCheckedThisMonth(jid){return isThisMonth(lastJunctionPatrol(jid));}
+
+function platformReports(stationId, platform){
+  return DB.reports.filter(r=>r.stationId===stationId && (r.platform||1)===platform);
+}
+function platformStatus(stationId, platform){
+  const rs = platformReports(stationId, platform);
+  const checked = isPlatformCheckedThisWeek(stationId, platform);
+  if(rs.length===0) return {cls:checked?'checked':'', count:0, checked};
+  const crit = rs.some(r=>r.sev==='Critical'||r.sev==='High');
+  let cls = crit?'has-crit':'has-report';
+  if(checked) cls += ' checked';
+  return {cls, count:rs.length, checked};
+}
+
+function toast(msg){const t=$('toast');t.textContent=msg;t.classList.add('on');
+  clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('on'),2200);}
+function openSheet(html){$('sheet').innerHTML='<div class="grab"></div>'+html;
+  $('sheet').classList.add('on');$('sheetBg').classList.add('on');}
+function closeSheet(){$('sheet').classList.remove('on');$('sheetBg').classList.remove('on');}
+function go(page,param){S.page=page;S.pageParam=param||null;render();}
+function back(){S.page=null;S.pageParam=null;render();}
+function setTab(t){S.tab=t;S.page=null;S.pageParam=null;render();}
+
+/* =========================================================
+   標記 / 取消標記 相關
+   ========================================================= */
+
+/* 車站級快捷標記：已標記 → 詢問是否取消；未標記 → 標記 */
+function quickMarkStation(sid){
+  const s = stById(sid);
+  const p1 = isPlatformCheckedThisWeek(sid,1);
+  const p2 = isPlatformCheckedThisWeek(sid,2);
+  if(p1 && p2){
+    // 已標記 → 顯示取消確認
+    openSheet(`
+      <h3>🚉 ${stationNum(sid)} ${esc(s.name)}</h3>
+      <div class="kv"><span>目前狀態</span><span style="color:var(--ok);font-weight:800">✅ 已標記本週巡查</span></div>
+      <div class="kv"><span>1 號月台</span><span>${lastPlatformPatrol(sid,1)}</span></div>
+      <div class="kv"><span>2 號月台</span><span>${lastPlatformPatrol(sid,2)}</span></div>
+      <div style="font-size:12px;color:var(--sub);margin:14px 0 12px;line-height:1.6">
+        此車站的 1 號及 2 號月台已標記為本週已巡查。<br>
+        如屬誤觸，可選擇取消標記還原為未巡查。
+      </div>
+      <button class="btn danger" onclick="unmarkStation(${sid})">↺ 取消標記（還原為未巡查）</button>
+      <button class="btn ghost" style="margin-top:9px" onclick="closeSheet()">保持現狀</button>
+    `);
+  } else {
+    // 未標記 → 直接標記
+    DB.patrolRecords.platforms[sid+'-1'] = today();
+    DB.patrolRecords.platforms[sid+'-2'] = today();
+    render();
+    toast('✅ 已標記 '+s.name+' 1號及2號月台為已巡查');
+  }
+}
+
+/* 取消車站標記（同時清 1、2 號月台） */
+function unmarkStation(sid){
+  delete DB.patrolRecords.platforms[sid+'-1'];
+  delete DB.patrolRecords.platforms[sid+'-2'];
+  closeSheet();
+  render();
+  toast('↺ 已取消 '+stById(sid).name+' 的巡查標記');
+}
+
+/* 標記單一月台 */
+function markPlatformChecked(stationId, platform){
+  DB.patrolRecords.platforms[stationId+'-'+platform] = today();
+  closeSheet();
+  render();
+  toast('✅ 已標記 '+stById(stationId).name+' '+platform+'號月台為已巡查');
+}
+
+/* 取消單一月台標記 */
+function unmarkPlatform(stationId, platform){
+  delete DB.patrolRecords.platforms[stationId+'-'+platform];
+  closeSheet();
+  render();
+  toast('↺ 已取消 '+stById(stationId).name+' '+platform+'號月台巡查標記');
+}
+
+/* =========================================================
+   主渲染 — 保留滾動位置
+   ========================================================= */
+function render(){
+  const c=$('content'),host=$('tabbarHost');
+  const prevScroll = c.scrollTop;
+  const keepScroll = (S.page==='reportForm' || S.page==='reportDetail' ||
+                     (!S.page && (S.tab==='map' || S.tab==='patrol')));
+
+  if(!S.loggedIn){
+    $('statusbar').className='statusbar';
+    host.innerHTML='';
+    c.innerHTML=viewLogin();
+    c.scrollTop=0;
+    return;
+  }
+  $('statusbar').className='statusbar';
+  let body='';
+  if(S.page){
+    body=({reportForm:viewReportForm,reportDetail:viewReportDetail,patrolDetail:viewPatrolDetail,
+      exportPage:viewExport,backupPage:viewBackup,deptAdmin:viewDeptAdmin,eqAdmin:viewEqAdmin,
+      userAdmin:viewUserAdmin,stationAdmin:viewStationAdmin,reportList:viewReportListAll})[S.page]?.()||'';
+  }else{
+    body=({home:viewHome,map:viewMap,patrol:viewPatrol,data:viewData,settings:viewSettings})[S.tab]?.()||'';
+  }
+  c.innerHTML=body;
+  c.scrollTop = keepScroll ? prevScroll : 0;
+
+  host.innerHTML=`<div class="tabbar">
+    ${tabBtn('home','🏠','首頁')}${tabBtn('map','🚉','車站和路口')}
+    ${tabBtn('patrol','📋','巡查')}${tabBtn('data','🗄️','數據')}${tabBtn('settings','⚙️','設定')}
+  </div>`;
+}
+function tabBtn(k,ic,label){const on=(!S.page&&S.tab===k);
+  return `<button class="tab ${on?'active':''}" onclick="setTab('${k}')"><span class="ic">${ic}</span><span>${label}</span></button>`;}
+
+/* =========================================================
+   表單輕量互動
+   ========================================================= */
+function pickEq(id){
+  S.selectedEq = id;
+  document.querySelectorAll('[data-eq-opt]').forEach(el=>{
+    const sel = parseInt(el.dataset.eqOpt) === id;
+    el.classList.toggle('on', sel);
+  });
+}
+function pickPlatform(p){
+  S.formPlatform = p;
+  document.querySelectorAll('[data-plat-opt]').forEach(el=>{
+    const sel = parseInt(el.dataset.platOpt) === p;
+    el.classList.toggle('on', sel);
+  });
+}
+function pickDept(id){
+  S.selectedDept = id;
+  S.formSubId = null;
+  document.querySelectorAll('[data-dept-opt]').forEach(el=>{
+    const sel = parseInt(el.dataset.deptOpt) === id;
+    el.classList.toggle('on', sel);
+  });
+  const subArea = document.getElementById('subDeptArea');
+  if(subArea){
+    const subs = DB.departments.filter(d=>d.parent===id);
+    const dp = dpById(id);
+    subArea.innerHTML = `
+      <div style="font-size:11px;font-weight:700;color:var(--sub);margin-bottom:7px">${esc(dp.name)}</div>
+      ${subs.length?`<label style="font-size:11px;font-weight:700;color:var(--sub);display:block;margin-bottom:5px">細分部門</label>
+        <select id="fSub" onchange="S.formSubId=parseInt(this.value)||null">
+          ${subs.map(s=>`<option value="${s.id}">${esc(s.code)} · ${esc(s.name)}</option>`).join('')}
+        </select>`
+        :'<div class="muted">此部門無細分單位</div>'}
+      <div class="divider"></div>
+      <div class="kv"><span>📧 收件電郵</span><span>${esc(dp.email)}</span></div>
+      ${dp.cc?`<div class="kv"><span>📎 副本</span><span>${esc(dp.cc)}</span></div>`:''}`;
+  }
+}
+
+/* =========================================================
+   登入
+   ========================================================= */
+function viewLogin(){
+  return `<div class="login-wrap">
+    <div class="logo-box">
+      <div class="logo-mark">🚈</div>
+      <h2>LR Patrol Pro</h2>
+      <p>香港輕鐵 · 設備損壞匯報系統</p>
+    </div>
+    <div class="login-card">
+      <h3>帳戶登入</h3>
+      <div class="field"><label>用戶名稱</label>
+        <input type="text" id="lgUser" value="admin" autocomplete="off"></div>
+      <div class="field"><label>密碼</label>
+        <input type="password" id="lgPwd" value="admin123"></div>
+      <div class="row between" style="margin-bottom:14px">
+        <label style="display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--sub);font-weight:600;cursor:pointer">
+          <input type="checkbox" checked style="width:auto;accent-color:var(--mtr-red)"> 記住此裝置
+        </label>
+        <span style="font-size:11.5px;color:var(--mtr-red);font-weight:700;cursor:pointer" onclick="toast('請聯絡 IECC 管理員重置密碼')">忘記密碼？</span>
+      </div>
+      <button class="btn" onclick="doLogin()">🔐 登入系統</button>
+      <div class="hint"><b>示範帳戶</b><br>管理員：admin / admin123<br>主管：chan / 123456</div>
+    </div>
+  </div>`;
+}
+function doLogin(){
+  const u=$('lgUser').value.trim(),p=$('lgPwd').value.trim();
+  const found=DB.users.find(x=>x.user===u&&x.pwd===p);
+  if(!found){toast('❌ 用戶名稱或密碼錯誤');return;}
+  S.loggedIn=true;S.currentUser=found;S.tab='home';toast('✅ 歡迎回來，'+found.name);render();
+}
+
+/* =========================================================
+   首頁
+   ========================================================= */
+function viewHome(){
+  const u=S.currentUser,total=DB.reports.length;
+  const open=DB.reports.filter(r=>r.status==='New'||r.status==='InProgress').length;
+  const done=DB.reports.filter(r=>r.status==='Fixed'||r.status==='Closed').length;
+  const crit=DB.reports.filter(r=>r.sev==='Critical'||r.sev==='High').length;
+  const pendingExport = DB.reports.filter(r=>!r.exported).length;
+  const recent=[...DB.reports].sort((a,b)=>b.at.localeCompare(a.at)).slice(0,4);
+  return `<div class="appbar"><div style="flex:1">
+    <h1>👷 ${esc(u.name)}</h1>
+    <span class="sub">${esc(u.role==='admin'?'系統管理員':'巡查主管')} · ${esc(u.dept)}</span></div>
+    <button class="iconbtn" onclick="toast('🔔 暫無新通知')">🔔</button></div>
+  <div class="page">
+    <div class="stats">
+      <div class="stat"><div class="n">${total}</div><div class="l">總匯報數</div></div>
+      <div class="stat s2"><div class="n">${open}</div><div class="l">待處理</div></div>
+      <div class="stat s3"><div class="n">${done}</div><div class="l">已完成</div></div>
+      <div class="stat s4"><div class="n">${crit}</div><div class="l">高優先級</div></div>
+    </div>
+    ${pendingExport>0?`
+    <div class="card" style="background:linear-gradient(135deg,#fff8e6,#fff0c8);border:1.5px solid #ffe2a8">
+      <div class="row between">
+        <div><div style="font-size:13px;font-weight:800;color:#8a6300">📥 ${pendingExport} 宗匯報待匯出</div>
+          <div style="font-size:11px;color:#a17a00;margin-top:3px">回到工位後匯出 .eml 至 Outlook</div></div>
+        <button class="btn sm" style="width:auto" onclick="go('exportPage')">匯出</button>
+      </div>
+    </div>`:''}
+    <div class="card"><div class="card-title">⚡ 快速操作</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px">
+        <button class="btn" style="padding:15px 8px;flex-direction:column;gap:6px;font-size:12px" onclick="resetForm();go('reportForm')">
+          <span style="font-size:22px">📸</span>新增匯報</button>
+        <button class="btn ghost" style="padding:15px 8px;flex-direction:column;gap:6px;font-size:12px" onclick="setTab('patrol')">
+          <span style="font-size:22px">📋</span>巡查進度</button>
+      </div>
+    </div>
+    <div class="card"><div class="card-title">最新匯報 <small onclick="go('reportList')" style="cursor:pointer;color:var(--mtr-red);font-weight:700">查看全部 ›</small></div>
+      ${recent.map(r=>{const eq=eqById(r.eqId),st=stById(r.stationId);
+        return `<div class="list-item" onclick="go('reportDetail',${r.id})">
+          <div class="li-ico">${eq.icon}</div>
+          <div class="li-body">
+            <p class="li-title">${stationNum(st.id)} ${esc(st.name)} <span class="pill">${r.platform||1}號月台</span>
+              <span class="badge ${statusClass(r.status)}">${statusText(r.status)}</span>
+              ${r.exported?'<span class="badge b-sent">已匯出</span>':'<span class="badge b-wait">待匯出</span>'}</p>
+            <p class="li-sub">${eq.icon} ${esc(eq.name)}</p>
+            <div class="li-meta"><span>🕐 ${r.at}</span><span>👤 ${esc(r.by)}</span><span>📷 ${r.photos}</span></div>
+          </div></div>`;}).join('')}
+    </div>
+  </div>`;
+}
+
+/* =========================================================
+   車站和路口
+   ========================================================= */
+function viewMap(){
+  const mode = S.stationViewMode;
+  const activeZone = S.selectedZone;
+  const zone = znById(activeZone);
+
+  const modeSeg = `
+    <div class="seg" style="margin-bottom:12px">
+      <button class="${mode==='platform'?'on':''}" onclick="S.stationViewMode='platform';S.selectedZone=1;render()">🚉 月台區</button>
+      <button class="${mode==='junction'?'on':''}" onclick="S.stationViewMode='junction';S.selectedZone=1;render()">🚦 路口區</button>
+    </div>`;
+
+  let totalInZone = 0;
+  if(mode==='platform') totalInZone = DB.stations.filter(s=>s.zone===activeZone).length;
+  else totalInZone = DB.junctions.filter(j=>j.zone===activeZone).length;
+
+  const tabs = DB.zones.map(z=>{
+    const cnt = mode==='platform'
+      ? DB.stations.filter(s=>s.zone===z.id).length
+      : DB.junctions.filter(j=>j.zone===z.id).length;
+    return `<button class="zone-tab ${z.id===activeZone?'on':''}" onclick="S.selectedZone=${z.id};render()">
+      ${z.icon} ${esc(z.name)} <span class="cnt">${cnt}</span>
+    </button>`;
+  }).join('');
+
+  let statBlock = '';
+  if(mode==='platform'){
+    let totalP = DB.stations.length*2;
+    let checkedP = 0, hasRepP = 0;
+    DB.stations.forEach(s=>{[1,2].forEach(p=>{
+      if(isPlatformCheckedThisWeek(s.id,p)) checkedP++;
+      const st = platformStatus(s.id,p);
+      if(st.count>0) hasRepP++;
+    });});
+    statBlock = `
+      <div class="zone-stat">
+        <div class="zs-item"><div class="n">${totalP}</div><div class="l">月台總數</div></div>
+        <div class="zs-item"><div class="n" style="color:var(--ok)">${checkedP}</div><div class="l">本週已巡查</div></div>
+        <div class="zs-item"><div class="n" style="color:var(--warn)">${hasRepP}</div><div class="l">有匯報月台</div></div>
+      </div>`;
+  } else {
+    const totalJ = DB.junctions.length;
+    const checkedJ = DB.junctions.filter(j=>isJunctionCheckedThisMonth(j.id)).length;
+    statBlock = `
+      <div class="zone-stat">
+        <div class="zs-item"><div class="n">${totalJ}</div><div class="l">路口總數</div></div>
+        <div class="zs-item"><div class="n" style="color:var(--ok)">${checkedJ}</div><div class="l">本月已巡查</div></div>
+        <div class="zs-item"><div class="n" style="color:var(--warn)">${totalJ-checkedJ}</div><div class="l">未巡查</div></div>
+      </div>`;
+  }
+
+  let content = '';
+  if(mode==='platform'){
+    const list = DB.stations.filter(s=>s.zone===activeZone);
+    content = list.map((s)=>{
+      const p1 = platformStatus(s.id, 1);
+      const p2 = platformStatus(s.id, 2);
+      const num = stationNum(s.id);
+      const stationChecked = p1.checked && p2.checked;
+
+      const row1 = `
+        <div class="plat-row ${p1.cls}" onclick="openPlatform(${s.id},1)">
+          <div class="plat-body">
+            <div class="plat-label">
+              <span class="plat-dot"></span>1號月台
+              ${p1.count>0?`<span class="plat-cnt">${p1.count}</span>`:''}
+            </div>
+          </div>
+          <span class="plat-arrow">›</span>
+        </div>`;
+      const row2 = `
+        <div class="plat-row ${p2.cls}" onclick="openPlatform(${s.id},2)">
+          <div class="plat-body">
+            <div class="plat-label">
+              <span class="plat-dot"></span>2號月台
+              ${p2.count>0?`<span class="plat-cnt">${p2.count}</span>`:''}
+            </div>
+          </div>
+          <span class="plat-arrow">›</span>
+        </div>`;
+
+      return `<div class="st-card">
+        <div class="st-head">
+          <span class="st-num">${num}</span>
+          <span class="st-name">${esc(s.name)} <span class="st-code">${esc(s.code)}</span></span>
+          <button class="station-mark-btn ${stationChecked?'on':''}" onclick="quickMarkStation(${s.id})">
+            ${stationChecked?'✓ 已巡查':'標記已巡查'}
+          </button>
+        </div>
+        ${row1}
+        ${row2}
+      </div>`;
+    }).join('');
+  } else {
+    const list = DB.junctions.filter(j=>j.zone===activeZone);
+    content = `<div class="junc-grid">
+      ${list.map(j=>{
+        const checked = isJunctionCheckedThisMonth(j.id);
+        const lastDate = lastJunctionPatrol(j.id);
+        return `<div class="junc-card ${checked?'checked':''}" onclick="openJunction('${j.id}')">
+          <div class="jc-name">${esc(j.id)}</div>
+          <div class="jc-status">${checked?`✅ 本月已巡查`:`⚠️ 本月未巡查`}</div>
+          ${lastDate?`<div style="font-size:9.5px;color:#95a3b8;margin-top:4px">上次：${lastDate}</div>`:''}
+        </div>`;
+      }).join('')}
+    </div>`;
+  }
+
+  return `<div class="appbar"><div style="flex:1">
+    <h1>🚉 車站和路口</h1>
+    <span class="sub">${DB.stations.length} 站 · ${DB.stations.length*2} 月台 · ${DB.junctions.length} 路口</span></div>
+    <button class="iconbtn" onclick="toast('🔍 搜尋車站或路口')">🔍</button></div>
+  <div class="page">
+    ${modeSeg}
+    ${statBlock}
+    <div class="zone-tabs">${tabs}</div>
+    <div class="zone-header" style="background:linear-gradient(135deg,${zone.from},${zone.to})">
+      <div>
+        <div class="zh-name">${zone.icon} ${esc(zone.name)}</div>
+        <div class="zh-meta">${mode==='platform'?`共 ${totalInZone} 個車站 · ${totalInZone*2} 個月台`:`共 ${totalInZone} 個路口`}</div>
+      </div>
+      <div class="zh-icon">${zone.icon}</div>
+    </div>
+    ${content}
+  </div>`;
+}
+
+function openPlatform(stationId, platform){
+  const s = stById(stationId);
+  const rs = platformReports(stationId, platform);
+  const zone = znById(s.zone);
+  const lastPatrol = lastPlatformPatrol(stationId, platform);
+  const checked = isPlatformCheckedThisWeek(stationId, platform);
+  const num = stationNum(stationId);
+
+  openSheet(`
+    <h3>🚉 ${num} ${esc(s.name)} · ${platform}號月台</h3>
+    <div class="kv"><span>車站編號</span><span style="font-family:monospace;font-weight:800">${num}</span></div>
+    <div class="kv"><span>車站代碼</span><span>${esc(s.code)}</span></div>
+    <div class="kv"><span>所屬區域</span><span>${zone.icon} ${esc(zone.name)}</span></div>
+    <div class="kv"><span>匯報總數</span><span>${rs.length} 宗</span></div>
+    <div class="kv"><span>本週巡查</span>
+      <span style="color:${checked?'var(--ok)':'var(--danger)'}">${checked?'✅ 已完成 ('+lastPatrol+')':'⚠️ 尚未巡查'}</span></div>
+    <button class="btn ${checked?'danger':'ok'}" style="margin-top:12px"
+      onclick="${checked?`unmarkPlatform(${stationId},${platform})`:`markPlatformChecked(${stationId},${platform})`}">
+      ${checked?'↺ 取消標記（還原為未巡查）':'✓ 標記為已巡查（無故障）'}
+    </button>
+    <div class="divider"></div>
+    <div style="font-size:12px;font-weight:800;margin-bottom:8px">📋 匯報記錄</div>
+    ${rs.length ? rs.map(r=>`
+      <div class="list-item" onclick="closeSheet();go('reportDetail',${r.id})">
+        <div class="li-ico">${eqById(r.eqId).icon}</div>
+        <div class="li-body">
+          <p class="li-title">${esc(r.no)} <span class="badge ${statusClass(r.status)}">${statusText(r.status)}</span>
+            <span class="badge ${sevClass(r.sev)}">${r.sev}</span></p>
+          <p class="li-sub">${esc(eqById(r.eqId).name)} · ${esc(r.loc)}</p>
+        </div>
+      </div>`).join('') :
+      '<div class="empty" style="padding:20px"><div class="e-ic">✅</div><b>此月台暫無匯報</b></div>'}
+    <button class="btn ghost" style="margin-top:14px" onclick="closeSheet();S.selectedStation=${stationId};S.formPlatform=${platform};resetForm();go('reportForm')">
+      ＋ 為此月台新增匯報
+    </button>
+  `);
+}
+
+function openStationPatrolSheet(sid){
+  const s = stById(sid);
+  const num = stationNum(sid);
+  const zone = znById(s.zone);
+  const p1 = isPlatformCheckedThisWeek(sid,1);
+  const p2 = isPlatformCheckedThisWeek(sid,2);
+  const last1 = lastPlatformPatrol(sid,1);
+  const last2 = lastPlatformPatrol(sid,2);
+  const allDone = p1 && p2;
+
+  openSheet(`
+    <h3>🚉 ${num} ${esc(s.name)}</h3>
+    <div class="kv"><span>車站代碼</span><span>${esc(s.code)}</span></div>
+    <div class="kv"><span>所屬區域</span><span>${zone.icon} ${esc(zone.name)}</span></div>
+    <div class="kv"><span>本週狀態</span>
+      <span style="color:${allDone?'var(--ok)':'var(--warn)'}">${allDone?'✅ 全部完成':(p1||p2?'⚠️ 部分完成':'❌ 尚未巡查')}</span></div>
+    <div class="divider"></div>
+    <div style="font-size:12px;font-weight:800;margin-bottom:8px">本週巡查標記（點擊可切換）</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
+      <div onclick="${p1?`unmarkPlatform(${sid},1)`:`markPlatformChecked(${sid},1)`}"
+        style="padding:14px 10px;border-radius:11px;cursor:pointer;text-align:center;transition:.15s;
+          border:1.8px solid ${p1?'var(--ok)':'var(--line)'};
+          background:${p1?'#e3f7ea':'#fbfcfe'}">
+        <b style="font-size:13px;font-weight:800;display:block;margin-bottom:3px;color:${p1?'var(--ok)':'var(--text)'}">
+          ${p1?'✓ ':''}1號月台</b>
+        <small style="font-size:10px;color:var(--sub);font-weight:600">${p1?'點擊取消標記':(last1?'上次：'+last1:'點擊標記已巡查')}</small>
+      </div>
+      <div onclick="${p2?`unmarkPlatform(${sid},2)`:`markPlatformChecked(${sid},2)`}"
+        style="padding:14px 10px;border-radius:11px;cursor:pointer;text-align:center;transition:.15s;
+          border:1.8px solid ${p2?'var(--ok)':'var(--line)'};
+          background:${p2?'#e3f7ea':'#fbfcfe'}">
+        <b style="font-size:13px;font-weight:800;display:block;margin-bottom:3px;color:${p2?'var(--ok)':'var(--text)'}">
+          ${p2?'✓ ':''}2號月台</b>
+        <small style="font-size:10px;color:var(--sub);font-weight:600">${p2?'點擊取消標記':(last2?'上次：'+last2:'點擊標記已巡查')}</small>
+      </div>
+    </div>
+    ${allDone?`<button class="btn danger" style="margin-bottom:10px" onclick="unmarkStation(${sid})">↺ 取消全部標記</button>`:''}
+    <button class="btn ghost" onclick="closeSheet();S.selectedStation=${sid};resetForm();go('reportForm')">＋ 新增匯報</button>
+  `);
+}
+
+function openJunction(jid){
+  const j = DB.junctions.find(x=>x.id===jid);
+  if(!j) return;
+  const zone = znById(j.zone);
+  const checked = isJunctionCheckedThisMonth(jid);
+  const lastPatrol = lastJunctionPatrol(jid);
+
+  openSheet(`
+    <h3>🚦 路口 ${esc(j.id)}</h3>
+    <div class="kv"><span>所屬區域</span><span>${zone.icon} ${esc(zone.name)}</span></div>
+    <div class="kv"><span>本月巡查</span>
+      <span style="color:${checked?'var(--ok)':'var(--danger)'}">${checked?'✅ 已完成 ('+lastPatrol+')':'⚠️ 尚未巡查'}</span></div>
+    <button class="btn ${checked?'danger':'ok'}" style="margin-top:12px"
+      onclick="${checked?`unmarkJunction('${jid}')`:`markJunctionChecked('${jid}')`}">
+      ${checked?'↺ 取消標記（還原為未巡查）':'✓ 標記為已巡查（無故障）'}
+    </button>
+    <div class="divider"></div>
+    <button class="btn ghost" onclick="closeSheet();resetForm();go('reportForm')">
+      ＋ 為此路口新增匯報
+    </button>
+  `);
+}
+function markJunctionChecked(jid){
+  DB.patrolRecords.junctions[jid] = today();
+  closeSheet();
+  render();
+  toast('✅ 已標記路口 '+jid+' 為本月已巡查');
+}
+function unmarkJunction(jid){
+  delete DB.patrolRecords.junctions[jid];
+  closeSheet();
+  render();
+  toast('↺ 已取消路口 '+jid+' 巡查標記');
+}
+
+/* =========================================================
+   巡查進度
+   ========================================================= */
+function viewPatrol(){
+  const mode = S.patrolViewMode;
+
+  const modeSeg = `
+    <div class="seg" style="margin-bottom:12px">
+      <button class="${mode==='platform'?'on':''}" onclick="S.patrolViewMode='platform';render()">🚉 月台巡查（每週）</button>
+      <button class="${mode==='junction'?'on':''}" onclick="S.patrolViewMode='junction';render()">🚦 路口巡查（每月）</button>
+    </div>`;
+
+  let body = '';
+  if(mode==='platform'){
+    const weekStart = getWeekStart();
+    const weekEnd = new Date(weekStart); weekEnd.setDate(weekStart.getDate()+6);
+    const fmt = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+
+    let totalSt = DB.stations.length;
+    let checkedSt = DB.stations.filter(s=>isStationCheckedThisWeek(s.id)).length;
+    const pct = Math.round(checkedSt/totalSt*100);
+
+    body = `
+      <div class="patrol-section" style="background:linear-gradient(135deg,#fdeef0,#fef5e7);border:1px solid #f6ccd1">
+        <div class="ps-head">
+          <div class="ps-title">📅 本週巡查週期</div>
+          <div class="ps-pct" style="color:${pct===100?'var(--ok)':'var(--mtr-red)'}">${pct}%</div>
+        </div>
+        <div style="font-size:11px;color:var(--sub);font-weight:700;margin-bottom:8px">
+          ${fmt(weekStart)} ~ ${fmt(weekEnd)} · ${checkedSt}/${totalSt} 個車站已完成
+        </div>
+        <div class="ps-bar"><i style="width:${pct}%;background:${pct===100?'var(--ok)':'linear-gradient(90deg,var(--mtr-red),var(--lr-orange))'}"></i></div>
+        <div style="font-size:10.5px;color:var(--sub);line-height:1.5">
+          每週至少完成一次全部車站巡查（1號及2號月台皆需完成），本週${pct===100?'已完成全部巡查 ✅':'尚餘 '+(totalSt-checkedSt)+' 個車站未完成'}
+        </div>
+      </div>
+    `;
+
+    body += DB.zones.map(z=>{
+      const stations = DB.stations.filter(s=>s.zone===z.id);
+      const items = stations.map(s=>({
+        num: stationNum(s.id),
+        name: s.name,
+        checked: isStationCheckedThisWeek(s.id),
+        sid: s.id
+      }));
+      const doneList = items.filter(i=>i.checked);
+      const missList = items.filter(i=>!i.checked);
+      const zPct = Math.round(doneList.length/items.length*100);
+      const barColor = zPct===100?'var(--ok)':zPct>=50?'var(--warn)':'var(--danger)';
+      return `
+        <div class="patrol-section">
+          <div class="ps-head">
+            <div class="ps-title" style="background:linear-gradient(135deg,${z.from},${z.to});padding:5px 10px;border-radius:9px">
+              ${z.icon} ${esc(z.name)}
+            </div>
+            <div class="ps-pct" style="color:${barColor}">${zPct}%</div>
+          </div>
+          <div class="ps-bar"><i style="width:${zPct}%;background:${barColor}"></i></div>
+          <div style="font-size:10.5px;color:var(--sub);font-weight:700;margin-bottom:9px">
+            已完成 ${doneList.length} / ${items.length} 個車站
+          </div>
+          ${doneList.length>0?`
+            <div class="ps-done-list">
+              <div class="ps-list-label"><span class="dot" style="background:var(--ok)"></span>已完成（${doneList.length}）</div>
+              <div class="ps-chips">
+                ${doneList.map(i=>`<span class="ps-chip ok" onclick="openStationPatrolSheet(${i.sid})" title="${esc(i.name)}">✓ ${i.num}</span>`).join('')}
+              </div>
+            </div>`:''}
+          ${missList.length>0?`
+            <div class="ps-undone-list">
+              <div class="ps-list-label"><span class="dot" style="background:var(--danger)"></span>未完成（${missList.length}）</div>
+              <div class="ps-chips">
+                ${missList.map(i=>`<span class="ps-chip miss" onclick="openStationPatrolSheet(${i.sid})" title="${esc(i.name)}">○ ${i.num}</span>`).join('')}
+              </div>
+            </div>`:''}
+        </div>
+      `;
+    }).join('');
+  } else {
+    const now = new Date();
+    const fmt = d => `${d.getFullYear()}年${d.getMonth()+1}月`;
+
+    let totalJ = DB.junctions.length;
+    let checkedJ = DB.junctions.filter(j=>isJunctionCheckedThisMonth(j.id)).length;
+    const pct = Math.round(checkedJ/totalJ*100);
+
+    body = `
+      <div class="patrol-section" style="background:linear-gradient(135deg,#e3f2fd,#f0f7ff);border:1px solid #bbdefb">
+        <div class="ps-head">
+          <div class="ps-title">📅 本月巡查週期</div>
+          <div class="ps-pct" style="color:${pct===100?'var(--ok)':'var(--mtr-red)'}">${pct}%</div>
+        </div>
+        <div style="font-size:11px;color:var(--sub);font-weight:700;margin-bottom:8px">
+          ${fmt(now)} · ${checkedJ}/${totalJ} 個路口已巡查
+        </div>
+        <div class="ps-bar"><i style="width:${pct}%;background:${pct===100?'var(--ok)':'linear-gradient(90deg,#1565c0,#42a5f5)'}"></i></div>
+        <div style="font-size:10.5px;color:var(--sub);line-height:1.5">
+          每月至少完成一次全部路口巡查，本月${pct===100?'已完成全部巡查 ✅':'尚餘 '+(totalJ-checkedJ)+' 個路口未巡查'}
+        </div>
+      </div>
+    `;
+
+    body += DB.zones.map(z=>{
+      const list = DB.junctions.filter(j=>j.zone===z.id);
+      const doneList = list.filter(j=>isJunctionCheckedThisMonth(j.id));
+      const missList = list.filter(j=>!isJunctionCheckedThisMonth(j.id));
+      const zPct = Math.round(doneList.length/list.length*100);
+      const barColor = zPct===100?'var(--ok)':zPct>=50?'var(--warn)':'var(--danger)';
+      return `
+        <div class="patrol-section">
+          <div class="ps-head">
+            <div class="ps-title" style="background:linear-gradient(135deg,${z.from},${z.to});padding:5px 10px;border-radius:9px">
+              ${z.icon} ${esc(z.name)}
+            </div>
+            <div class="ps-pct" style="color:${barColor}">${zPct}%</div>
+          </div>
+          <div class="ps-bar"><i style="width:${zPct}%;background:${barColor}"></i></div>
+          <div style="font-size:10.5px;color:var(--sub);font-weight:700;margin-bottom:9px">
+            已完成 ${doneList.length} / ${list.length} 個路口
+          </div>
+          ${doneList.length>0?`
+            <div class="ps-done-list">
+              <div class="ps-list-label"><span class="dot" style="background:var(--ok)"></span>已完成（${doneList.length}）</div>
+              <div class="ps-chips">
+                ${doneList.map(j=>`<span class="ps-chip junc ok" onclick="openJunction('${j.id}')">✓ ${esc(j.id)}</span>`).join('')}
+              </div>
+            </div>`:''}
+          ${missList.length>0?`
+            <div class="ps-undone-list">
+              <div class="ps-list-label"><span class="dot" style="background:var(--warn)"></span>未完成（${missList.length}）</div>
+              <div class="ps-chips">
+                ${missList.map(j=>`<span class="ps-chip junc miss" onclick="openJunction('${j.id}')">○ ${esc(j.id)}</span>`).join('')}
+              </div>
+            </div>`:''}
+        </div>
+      `;
+    }).join('');
+  }
+
+  return `<div class="appbar"><div style="flex:1">
+    <h1>📋 巡查進度</h1>
+    <span class="sub">月台每週 · 路口每月</span></div>
+    <button class="iconbtn" onclick="toast('📅 切換週期')">📅</button></div>
+  <div class="page">
+    ${modeSeg}
+    ${body}
+  </div>`;
+}
+function viewPatrolDetail(){
+  const p = {id:1,stationId:1,user:'陳大文',date:'2026-02-14',items:[
+    {name:'月台地面及邊緣',done:true},{name:'月台座椅及設施',done:true},
+  ]};
+  const st = stById(p.stationId);
+  return `<div class="appbar"><button class="iconbtn" onclick="back()">‹</button>
+    <div style="flex:1"><h1>${esc(st.name)}</h1><span class="sub">巡查清單</span></div></div>
+  <div class="page">
+    <div class="card"><div class="card-title">檢查項目</div>
+      ${p.items.map(it=>`<div class="toolrow">
+        <div class="ic" style="background:${it.done?'#e3f7ea':'#f0f3f8'};color:${it.done?'var(--ok)':'var(--sub)'}">${it.done?'✓':'○'}</div>
+        <div class="tx"><b>${esc(it.name)}</b><span>${it.done?'已完成檢查':'待檢查'}</span></div></div>`).join('')}
+    </div>
+  </div>`;
+}
+
+/* =========================================================
+   匯報表單
+   ========================================================= */
+function resetForm(){
+  S.formPhotos=0;
+  S.selectedEq=null;
+  S.selectedDept=null;
+  S.formSubId=null;
+  S.formSev='Medium';
+  S.formLoc='';
+  S.formDesc='';
+  S.formStation=1;
+  S.formPlatform=1;
+}
+
+function viewReportForm(){
+  const roots=DB.departments.filter(d=>!d.parent);
+  const selDept=S.selectedDept;
+  const subs=selDept?DB.departments.filter(d=>d.parent===selDept):[];
+
+  const stationOpts = DB.zones.map(z=>{
+    const list = DB.stations.filter(s=>s.zone===z.id);
+    return `<optgroup label="${z.icon} ${z.name}">
+      ${list.map(s=>`<option value="${s.id}" ${S.formStation===s.id?'selected':''}>${stationNum(s.id)} ${esc(s.name)}</option>`).join('')}
+    </optgroup>`;
+  }).join('');
+
+  return `<div class="appbar"><button class="iconbtn" onclick="back()">‹</button>
+    <div style="flex:1"><h1>📸 新增故障匯報</h1><span class="sub">填寫資料並指派維修部門</span></div></div>
+  <div class="page">
+
+    <div class="card">
+      <div class="card-title">
+        <span style="display:flex;align-items:center"><span class="step-badge">1</span>現場相片</span>
+        <small>必填 · 最多 6 張</small>
+      </div>
+      <div class="photo-grid">
+        ${[0,1,2,3,4,5].map(i=>{const f=i<S.formPhotos;
+          return `<div class="photo-slot ${f?'filled':''}" onclick="addPhoto()">${f?'':'<span class="big">📷</span><span>拍照</span>'}</div>`;}).join('')}
+      </div>
+      <div class="muted" style="margin-top:9px">${S.formPhotos>0?`已拍攝 ${S.formPhotos} 張 · GPS 座標將自動寫入 EXIF`:'點擊方格即時拍照'}</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">
+        <span style="display:flex;align-items:center"><span class="step-badge">2</span>設備類別 <span class="req" style="color:var(--danger);margin-left:3px">*</span></span>
+        <small onclick="go('eqAdmin')" style="cursor:pointer;color:var(--mtr-red);font-weight:700">管理 ›</small>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px">
+        ${DB.equipments.map(e=>`<div class="eq-opt ${S.selectedEq===e.id?'on':''}" data-eq-opt="${e.id}" onclick="pickEq(${e.id})">
+          <div class="eq-icon">${e.icon}</div>
+          <div class="eq-name">${esc(e.name)}</div>
+        </div>`).join('')}
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">
+        <span style="display:flex;align-items:center"><span class="step-badge">3</span>指派維修部門 <span class="req" style="color:var(--danger);margin-left:3px">*</span></span>
+        <small onclick="go('deptAdmin')" style="cursor:pointer;color:var(--mtr-red);font-weight:700">管理 ›</small>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:12px">
+        ${roots.map(d=>`<div class="dept-opt ${selDept===d.id?'on':''}" data-dept-opt="${d.id}" onclick="pickDept(${d.id})">
+          <b>${esc(d.code)}</b>
+        </div>`).join('')}
+      </div>
+      <div id="subDeptArea">
+        ${selDept?`
+          <div style="font-size:11px;font-weight:700;color:var(--sub);margin-bottom:7px">${esc(dpById(selDept).name)}</div>
+          ${subs.length?`<label style="font-size:11px;font-weight:700;color:var(--sub);display:block;margin-bottom:5px">細分部門</label>
+            <select id="fSub" onchange="S.formSubId=parseInt(this.value)||null">
+              ${subs.map(s=>`<option value="${s.id}" ${S.formSubId===s.id?'selected':''}>${esc(s.code)} · ${esc(s.name)}</option>`).join('')}
+            </select>`
+            :'<div class="muted">此部門無細分單位</div>'}
+          <div class="divider"></div>
+          <div class="kv"><span>📧 收件電郵</span><span>${esc(dpById(selDept).email)}</span></div>
+          ${dpById(selDept).cc?`<div class="kv"><span>📎 副本</span><span>${esc(dpById(selDept).cc)}</span></div>`:''}
+        `:'<div class="muted">請先選擇主要負責部門</div>'}
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">
+        <span style="display:flex;align-items:center"><span class="step-badge">4</span>位置資訊 <span class="req" style="color:var(--danger);margin-left:3px">*</span></span>
+      </div>
+      <div class="field"><label>車站 <span class="req">*</span></label>
+        <select id="fStation" onchange="S.formStation=parseInt(this.value)">
+          ${stationOpts}
+        </select></div>
+      <div class="field"><label>月台 <span class="req">*</span></label>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <div class="platform-opt ${(S.formPlatform||1)===1?'on':''}" data-plat-opt="1" onclick="pickPlatform(1)">
+            <b>1 號月台</b><small>Platform 1</small></div>
+          <div class="platform-opt ${S.formPlatform===2?'on':''}" data-plat-opt="2" onclick="pickPlatform(2)">
+            <b>2 號月台</b><small>Platform 2</small></div>
+        </div>
+      </div>
+      <div class="field"><label>具體位置 <span class="req">*</span></label>
+        <input type="text" id="fLoc" value="${esc(S.formLoc||'')}" oninput="S.formLoc=this.value"
+          placeholder="例：月台中間 / 往屯門方向"></div>
+      <div class="row" style="gap:9px">
+        <div class="field" style="flex:1;margin:0"><label>GPS 緯度</label>
+          <input type="text" value="22.37231" readonly style="background:#f4f6f9;color:var(--sub)"></div>
+        <div class="field" style="flex:1;margin:0"><label>GPS 經度</label>
+          <input type="text" value="113.96624" readonly style="background:#f4f6f9;color:var(--sub)"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">
+        <span style="display:flex;align-items:center"><span class="step-badge">5</span>故障詳情</span>
+      </div>
+      <div class="field"><label>嚴重程度 <span class="req">*</span></label>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:7px">
+          ${['Low','Medium','High','Critical'].map(s=>`<div onclick="S.formSev='${s}';render()"
+            style="padding:9px 3px;border-radius:10px;cursor:pointer;text-align:center;font-size:11px;font-weight:800;
+              border:1.6px solid ${(S.formSev||'Medium')===s?'var(--mtr-red)':'var(--line)'};
+              background:${(S.formSev||'Medium')===s?'#fdeef0':'#fbfcfe'};
+              color:${(S.formSev||'Medium')===s?'var(--mtr-red)':'var(--sub)'}">
+            ${{Low:'低',Medium:'中',High:'高',Critical:'緊急'}[s]}</div>`).join('')}
+        </div></div>
+      <div class="field" style="margin-bottom:0"><label>故障描述 <span class="req">*</span></label>
+        <textarea id="fDesc" oninput="S.formDesc=this.value"
+          placeholder="請詳細描述故障情況、影響範圍及已採取措施…">${esc(S.formDesc||'')}</textarea></div>
+    </div>
+
+    <div class="card" style="background:linear-gradient(135deg,#fff8e6,#fff0c8);border:1.5px solid #ffe2a8">
+      <div style="font-size:11px;color:#8a6300;line-height:1.6">
+        <b>📥 匯報儲存方式</b><br>
+        提交後將儲存至 App 資料庫，<b>不會即時發送 Email</b>。<br>
+        回到工位後可於「數據管理」匯出 .eml 檔案，再經公司電腦 Outlook 發送給相關維修部門。
+      </div>
+    </div>
+
+    <button class="btn" onclick="submitReport()">📥 提交並儲存匯報</button>
+    <button class="btn ghost" style="margin-top:9px" onclick="toast('💾 已儲存為草稿')">💾 儲存草稿</button>
+  </div>`;
+}
+function addPhoto(){if(S.formPhotos>=6){toast('最多 6 張相片');return;}S.formPhotos++;render();toast('📸 已拍攝第 '+S.formPhotos+' 張相片');}
+function submitReport(){
+  const st=S.formStation||1;
+  const loc=(S.formLoc||'').trim();
+  const desc=(S.formDesc||'').trim();
+  if(!S.formPhotos){toast('❌ 請至少拍攝 1 張現場相片');return;}
+  if(!S.selectedEq){toast('❌ 請選擇設備類別');return;}
+  if(!S.selectedDept){toast('❌ 請指派維修部門');return;}
+  if(!loc){toast('❌ 請填寫具體位置');return;}
+  if(!desc){toast('❌ 請填寫故障描述');return;}
+
+  const deptId = S.formSubId || S.selectedDept;
+  const now=new Date(),pad=n=>String(n).padStart(2,'0');
+  const stamp=`${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}`;
+  const seq=String(DB.reports.length+1).padStart(3,'0');
+  DB.reports.unshift({id:DB.reports.length+1,no:`RPT-${stamp}-${seq}`,stationId:st,
+    platform:S.formPlatform||1, loc,eqId:S.selectedEq,deptId,desc,
+    sev:S.formSev||'Medium',status:'New',by:S.currentUser.name,
+    at:`${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}`,
+    lat:22.37231,lng:113.96624,photos:S.formPhotos,exported:false,exportedAt:null});
+  resetForm();
+  S.page=null;S.tab='home';render();
+  toast('✅ 匯報已儲存至 App，可稍後匯出至 Outlook');
+}
+
+/* =========================================================
+   匯報詳情
+   ========================================================= */
+function viewReportDetail(){
+  const r=DB.reports.find(x=>x.id===S.pageParam);if(!r)return '';
+  const st=stById(r.stationId),eq=eqById(r.eqId),dp=dpById(r.deptId);
+  const zone = znById(st.zone);
+  return `<div class="appbar"><button class="iconbtn" onclick="back()">‹</button>
+    <div style="flex:1"><h1>${esc(r.no)}</h1><span class="sub">${stationNum(st.id)} ${esc(st.name)} · ${r.platform||1}號月台</span></div>
+    <button class="iconbtn" onclick="toast('📤 分享匯報')">📤</button></div>
+  <div class="page">
+    <div class="card">
+      <div class="row between" style="margin-bottom:10px">
+        <span class="badge ${statusClass(r.status)}" style="font-size:11.5px;padding:5px 12px">${statusText(r.status)}</span>
+        <span class="badge ${sevClass(r.sev)}" style="font-size:11.5px;padding:5px 12px">${r.sev} 優先</span></div>
+      <div class="kv"><span>區域</span><span>${zone.icon} ${esc(zone.name)}</span></div>
+      <div class="kv"><span>車站</span><span>${stationNum(st.id)} ${esc(st.name)}</span></div>
+      <div class="kv"><span>月台</span><span>${r.platform||1} 號月台</span></div>
+      <div class="kv"><span>具體位置</span><span>${esc(r.loc)}</span></div>
+      <div class="kv"><span>設備類別</span><span>${eq.icon} ${esc(eq.name)}</span></div>
+      <div class="kv"><span>維修部門</span><span>${esc(dp.code)} · ${esc(dp.name)}</span></div>
+      <div class="kv"><span>GPS 座標</span><span>${r.lat.toFixed(5)}, ${r.lng.toFixed(5)}</span></div>
+      <div class="kv"><span>匯報人</span><span>${esc(r.by)}</span></div>
+      <div class="kv"><span>匯報時間</span><span>${r.at}</span></div>
+      <div class="kv"><span>匯出狀態</span>
+        <span class="badge ${r.exported?'b-sent':'b-wait'}">${r.exported?'✅ 已匯出 ('+r.exportedAt+')':'⏳ 待匯出至 Outlook'}</span></div>
+    </div>
+    <div class="card"><div class="card-title">📝 故障描述</div>
+      <div style="font-size:13px;line-height:1.7;color:#2a3646">${esc(r.desc)}</div></div>
+    <div class="card"><div class="card-title">📷 現場相片 <small>${r.photos} 張</small></div>
+      <div class="photo-grid">${Array.from({length:r.photos}).map((_,i)=>`
+        <div class="photo-slot filled" onclick="openViewer('${esc(r.no)} 相片 ${i+1}','${r.at}',${r.lat},${r.lng})"></div>`).join('')}</div>
+      <div class="muted" style="margin-top:9px">點擊相片可全螢幕檢視</div></div>
+    <div class="card" style="background:linear-gradient(135deg,#fff8e6,#fff0c8);border:1.5px solid #ffe2a8">
+      <div style="font-size:11px;color:#8a6300;line-height:1.6">
+        <b>📤 匯出至 Outlook 流程</b><br>
+        1. 回到工位後於「數據管理」點選匯出<br>
+        2. 產生 .eml 檔案，直接匯入公司電腦 Outlook<br>
+        3. 由 Outlook 發送給 ${esc(dp.code)} (${esc(dp.email)})
+      </div>
+    </div>
+    <button class="btn" onclick="go('exportPage')">📤 匯出此匯報 (.eml)</button>
+    <div class="row" style="gap:9px;margin-top:9px">
+      <button class="btn ghost" style="flex:1" onclick="toast('✏️ 進入編輯模式')">✏️ 編輯</button>
+      <button class="btn ghost" style="flex:1" onclick="toast('📄 已匯出 PDF 報告')">📄 PDF</button></div>
+  </div>`;
+}
+function openViewer(title,meta,lat,lng){
+  $('viewerTitle').textContent=title;
+  $('viewerMeta').innerHTML=`拍攝時間：${meta}<br>GPS：${lat.toFixed(5)}, ${lng.toFixed(5)}<br>此座標將寫入匯出記錄`;
+  $('viewer').classList.add('on');
+}
+
+/* =========================================================
+   全部匯報列表
+   ========================================================= */
+function viewReportListAll(){
+  const filters=[{k:'all',l:'全部'},{k:'New',l:'待跟進'},{k:'InProgress',l:'處理中'},{k:'Fixed',l:'已修復'},{k:'Closed',l:'已結案'}];
+  const list=DB.reports.filter(r=>S.reportFilter==='all'||r.status===S.reportFilter);
+  return `<div class="appbar"><button class="iconbtn" onclick="back()">‹</button>
+    <div style="flex:1"><h1>📋 所有匯報記錄</h1><span class="sub">共 ${DB.reports.length} 宗</span></div>
+    <button class="iconbtn" onclick="toast('🔍 進階搜尋')">🔍</button></div>
+  <div class="page">
+    <div class="seg">${filters.map(f=>`<button class="${S.reportFilter===f.k?'on':''}" onclick="S.reportFilter='${f.k}';render()">${f.l}</button>`).join('')}</div>
+    ${list.length?list.map(r=>{const st=stById(r.stationId),eq=eqById(r.eqId),dp=dpById(r.deptId);
+      return `<div class="card" style="cursor:pointer;padding:12px" onclick="go('reportDetail',${r.id})">
+        <div class="row between" style="align-items:flex-start;margin-bottom:6px">
+          <div style="flex:1;min-width:0">
+            <div style="font-size:12.5px;font-weight:800;margin-bottom:3px">${esc(r.no)}</div>
+            <div style="font-size:11px;color:var(--sub)">🚉 ${stationNum(st.id)} ${esc(st.name)} · ${r.platform||1}號月台</div></div>
+          <div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end">
+            <span class="badge ${sevClass(r.sev)}">${r.sev}</span>
+            <span class="badge ${r.exported?'b-sent':'b-wait'}">${r.exported?'已匯出':'待匯出'}</span>
+          </div></div>
+        <div style="font-size:12px;color:#3a4757;line-height:1.5;margin-bottom:8px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">${esc(r.desc)}</div>
+        <div class="row between"><div style="font-size:10px;color:#95a3b8">${eq.icon} ${esc(eq.name)} · ${esc(dp.code)}</div>
+          <span class="badge ${statusClass(r.status)}">${statusText(r.status)}</span></div>
+      </div>`;}).join(''):'<div class="empty"><div class="e-ic">📭</div><b>沒有符合條件的記錄</b></div>'}
+  </div>`;
+}
+
+/* =========================================================
+   數據管理
+   ========================================================= */
+function viewData(){
+  let totalPlatforms = DB.stations.length*2;
+  const pending = DB.reports.filter(r=>!r.exported).length;
+  return `<div class="appbar"><div style="flex:1"><h1>🗄️ 數據管理</h1><span class="sub">備份 · 匯出 · 部門 · 帳戶</span></div></div>
+  <div class="page">
+    <div class="stats">
+      <div class="stat"><div class="n">${DB.reports.length}</div><div class="l">匯報記錄</div></div>
+      <div class="stat s2"><div class="n">${pending}</div><div class="l">待匯出</div></div>
+      <div class="stat s3"><div class="n">${DB.stations.length}</div><div class="l">車站</div></div>
+      <div class="stat s4"><div class="n">${DB.junctions.length}</div><div class="l">路口</div></div>
+    </div>
+    ${pending>0?`
+    <div class="card" style="background:linear-gradient(135deg,#fff8e6,#fff0c8);border:1.5px solid #ffe2a8">
+      <div style="font-size:12px;font-weight:800;color:#8a6300;margin-bottom:5px">📥 ${pending} 宗匯報待匯出</div>
+      <div style="font-size:11px;color:#a17a00;line-height:1.5">匯出 .eml 檔案後，可直接匯入公司電腦 Outlook 發送給維修部門。</div>
+    </div>`:''}
+    <div class="card"><div class="card-title">📤 匯出資料</div>
+      <div class="toolrow" onclick="go('exportPage')"><div class="ic" style="background:#e6f0ff">📧</div>
+        <div class="tx"><b>匯出 Email (.eml) 至 Outlook</b><span>匯入公司電腦 Outlook 發送給維修部門</span></div><span class="chev">›</span></div>
+      <div class="toolrow" onclick="go('exportPage')"><div class="ic" style="background:#e3f7ea">🗃️</div>
+        <div class="tx"><b>匯出 Access / CSV</b><span>結構化記錄，可直接匯入 Access</span></div><span class="chev">›</span></div>
+      <div class="toolrow" onclick="toast('📄 已匯出 PDF 月報')"><div class="ic" style="background:#fdeef0">📄</div>
+        <div class="tx"><b>匯出 PDF 報告</b><span>含相片及 GPS 座標</span></div><span class="chev">›</span></div>
+    </div>
+    <div class="card"><div class="card-title">💾 備份與還原</div>
+      <div class="toolrow" onclick="go('backupPage')"><div class="ic" style="background:#fff4dd">💾</div>
+        <div class="tx"><b>完整備份</b><span>資料庫 + 相片打包 ZIP</span></div><span class="chev">›</span></div>
+      <div class="toolrow" onclick="toast('📥 請選擇備份檔案還原')"><div class="ic" style="background:#f0f3f8">📥</div>
+        <div class="tx"><b>還原備份</b><span>從 ZIP 檔案回復所有資料</span></div><span class="chev">›</span></div>
+    </div>
+    <div class="card"><div class="card-title">⚙️ 主資料維護</div>
+      <div class="toolrow" onclick="go('deptAdmin')"><div class="ic" style="background:#fdeef0">🏢</div>
+        <div class="tx"><b>維修部門管理</b><span>${DB.departments.length} 個部門 · 可新增</span></div><span class="chev">›</span></div>
+      <div class="toolrow" onclick="go('eqAdmin')"><div class="ic" style="background:#e3f7ea">🔧</div>
+        <div class="tx"><b>設備類別管理</b><span>${DB.equipments.length} 個類別 · 可自訂</span></div><span class="chev">›</span></div>
+      <div class="toolrow" onclick="go('stationAdmin')"><div class="ic" style="background:#e6f0ff">🚉</div>
+        <div class="tx"><b>車站月台管理</b><span>${DB.stations.length} 站 · ${totalPlatforms} 月台</span></div><span class="chev">›</span></div>
+      <div class="toolrow" onclick="go('userAdmin')"><div class="ic" style="background:#fff4dd">👤</div>
+        <div class="tx"><b>帳戶資料管理</b><span>${DB.users.length} 個帳戶</span></div><span class="chev">›</span></div>
+    </div>
+    <div class="card"><div class="card-title">📋 系統記錄</div>
+      <div class="toolrow" onclick="toast('📜 查看操作日誌')"><div class="ic" style="background:#f0f3f8">📜</div>
+        <div class="tx"><b>操作日誌</b><span>登入 / 匯報 / 匯出記錄</span></div><span class="chev">›</span></div>
+      <div class="toolrow" onclick="toast('🗑️ 清理快取')"><div class="ic" style="background:#f0f3f8">🧹</div>
+        <div class="tx"><b>清理快取</b><span>釋放裝置儲存空間</span></div><span class="chev">›</span></div>
+    </div>
+  </div>`;
+}
+function viewExport(){
+  const pending = DB.reports.filter(r=>!r.exported);
+  return `<div class="appbar"><button class="iconbtn" onclick="back()">‹</button>
+    <div style="flex:1"><h1>📤 匯出資料管理</h1><span class="sub">Email / Access / PDF</span></div></div>
+  <div class="page">
+    <div class="card"><div class="card-title">匯出範圍</div>
+      <div class="field"><label>開始日期</label><input type="text" value="2026-02-01"></div>
+      <div class="field" style="margin-bottom:0"><label>結束日期</label><input type="text" value="2026-02-14"></div>
+    </div>
+    <div class="card"><div class="card-title">匯出格式</div>
+      <div class="toolrow" onclick="doExport()"><div class="ic" style="background:#e6f0ff">📧</div>
+        <div class="tx"><b>Email 格式 (.eml)</b><span>直接匯入公司電腦 Outlook</span></div><span class="chev">›</span></div>
+      <div class="toolrow" onclick="doExport()"><div class="ic" style="background:#e3f7ea">🗃️</div>
+        <div class="tx"><b>Access 資料庫 (.accdb)</b><span>含 Reports / Photos 資料表</span></div><span class="chev">›</span></div>
+      <div class="toolrow" onclick="doExport()"><div class="ic" style="background:#fff4dd">📊</div>
+        <div class="tx"><b>Excel (.xlsx)</b><span>含相片路徑欄位</span></div><span class="chev">›</span></div>
+      <div class="toolrow" onclick="doExport()"><div class="ic" style="background:#fdeef0">📄</div>
+        <div class="tx"><b>PDF 報告</b><span>圖文並茂</span></div><span class="chev">›</span></div>
+    </div>
+    <div class="card"><div class="card-title">📊 匯出預覽</div>
+      <div class="kv"><span>符合條件記錄</span><span>${DB.reports.length} 宗</span></div>
+      <div class="kv"><span>待匯出記錄</span><span style="color:var(--warn)">${pending.length} 宗</span></div>
+      <div class="kv"><span>包含相片</span><span>${DB.reports.reduce((a,b)=>a+b.photos,0)} 張</span></div>
+      <div class="kv"><span>涉及部門</span><span>${new Set(DB.reports.map(r=>r.deptId)).size} 個</span></div>
+      <div class="kv"><span>預估檔案大小</span><span>約 12.4 MB</span></div></div>
+    <div class="card" style="background:linear-gradient(135deg,#f0f7ff,#e3f2fd);border:1.5px solid #bbdefb">
+      <div style="font-size:11px;color:#1565c0;line-height:1.6">
+        <b>📤 匯出流程</b><br>
+        1. 點擊「開始匯出」產生 .eml 檔案<br>
+        2. 將檔案傳至公司電腦<br>
+        3. 用 Outlook 開啟 .eml，檢查收件人後發送
+      </div>
+    </div>
+    <button class="btn" onclick="doExport()">📤 開始匯出</button>
+  </div>`;
+}
+function doExport(){
+  const pending = DB.reports.filter(r=>!r.exported);
+  if(pending.length===0){toast('✅ 所有匯報已匯出');return;}
+  const now = new Date();
+  const pad = n=>String(n).padStart(2,'0');
+  const at = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
+  pending.forEach(r=>{r.exported=true;r.exportedAt=at;});
+  toast('✅ 已匯出 '+pending.length+' 宗匯報，可匯入 Outlook');
+  render();
+}
+function viewBackup(){
+  return `<div class="appbar"><button class="iconbtn" onclick="back()">‹</button>
+    <div style="flex:1"><h1>💾 資料備份</h1><span class="sub">完整備份與還原</span></div></div>
+  <div class="page">
+    <div class="card" style="text-align:center;padding:22px 14px">
+      <div style="font-size:44px;margin-bottom:8px">🗄️</div>
+      <div style="font-size:15px;font-weight:800;margin-bottom:5px">完整備份</div>
+      <div class="muted" style="margin-bottom:16px;line-height:1.6">將所有匯報記錄、相片、部門設定<br>打包成單一 ZIP 檔案</div>
+      <button class="btn" onclick="toast('💾 備份中… 完成後將通知您')">💾 立即備份</button></div>
+    <div class="card"><div class="card-title">備份內容</div>
+      <div class="kv"><span>匯報記錄</span><span>${DB.reports.length} 宗</span></div>
+      <div class="kv"><span>現場相片</span><span>${DB.reports.reduce((a,b)=>a+b.photos,0)} 張</span></div>
+      <div class="kv"><span>車站資料</span><span>${DB.stations.length} 站 · ${DB.stations.length*2} 月台</span></div>
+      <div class="kv"><span>路口資料</span><span>${DB.junctions.length} 個</span></div>
+      <div class="kv"><span>部門設定</span><span>${DB.departments.length} 個</span></div>
+      <div class="kv"><span>設備類別</span><span>${DB.equipments.length} 個</span></div></div>
+    <div class="card"><div class="card-title">歷史備份</div>
+      ${[{n:'LRPatrolPro_Backup_20260214.zip',s:'12.4 MB',t:'2026-02-14 08:00'},
+        {n:'LRPatrolPro_Backup_20260207.zip',s:'11.8 MB',t:'2026-02-07 08:00'},
+        {n:'LRPatrolPro_Backup_20260131.zip',s:'10.2 MB',t:'2026-01-31 08:00'}].map(b=>`
+        <div class="toolrow"><div class="ic" style="background:#e6f0ff">📦</div>
+          <div class="tx"><b style="font-size:11.5px">${b.n}</b><span>${b.s} · ${b.t}</span></div>
+          <span class="chev" onclick="event.stopPropagation();toast('📥 還原此備份')">↩️</span></div>`).join('')}
+    </div>
+    <div class="card"><div class="card-title">自動備份設定</div>
+      <div class="toolrow"><div class="tx"><b>每日自動備份</b><span>每日 08:00 自動執行</span></div>
+        <label class="switch"><input type="checkbox" checked><span class="slider"></span></label></div>
+      <div class="toolrow"><div class="tx"><b>僅在 Wi-Fi 下備份</b><span>避免消耗流動數據</span></div>
+        <label class="switch"><input type="checkbox" checked><span class="slider"></span></label></div>
+    </div>
+  </div>`;
+}
+function viewDeptAdmin(){
+  const roots=DB.departments.filter(d=>!d.parent);
+  return `<div class="appbar"><button class="iconbtn" onclick="back()">‹</button>
+    <div style="flex:1"><h1>🏢 維修部門管理</h1><span class="sub">${DB.departments.length} 個部門 · 可自訂新增</span></div>
+    <button class="iconbtn" onclick="addDept()">＋</button></div>
+  <div class="page">
+    ${roots.map(d=>{const subs=DB.departments.filter(x=>x.parent===d.id);
+      return `<div class="card">
+        <div class="dept-head ${S.selectedDept===d.id?'on':''}" onclick="S.selectedDept=${S.selectedDept===d.id?null:d.id};render()">
+          <div style="display:flex;align-items:center"><span class="code">${esc(d.code)}</span><b>${esc(d.name)}</b></div>
+          <span style="font-size:15px;color:var(--sub)">${subs.length?'▾':'•'}</span></div>
+        ${S.selectedDept===d.id?`<div style="margin-top:10px">
+          <div class="kv"><span>📧 電郵</span><span>${esc(d.email)}</span></div>
+          ${subs.length?`<div style="font-size:11px;font-weight:800;color:var(--sub);margin:12px 0 7px">細分部門 (${subs.length})</div>
+            ${subs.map(s=>`<div class="dept-node"><div class="dept-head">
+              <div style="display:flex;align-items:center"><span class="code grey">${esc(s.code)}</span><b style="font-size:12px">${esc(s.name)}</b></div>
+              <span class="chev" onclick="event.stopPropagation();toast('✏️ 編輯 ${s.code}')">›</span></div>
+              <div style="font-size:10.5px;color:var(--sub);padding:5px 0 0 12px">📧 ${esc(s.email)}</div></div>`).join('')}`:''}
+          <div class="row" style="gap:8px;margin-top:10px">
+            <button class="btn ghost sm" style="flex:1" onclick="addSubDept(${d.id})">＋ 新增細分</button>
+            <button class="btn ghost sm" style="flex:1" onclick="editDept(${d.id})">✏️ 編輯</button>
+          </div></div>`:''}
+      </div>`;}).join('')}
+    <button class="btn outline" onclick="addDept()">＋ 新增主要部門</button>
+  </div>`;
+}
+function addDept(){
+  const code = prompt('新部門代碼（例：NEW）：');
+  if(!code) return;
+  const name = prompt('新部門名稱：');
+  if(!name) return;
+  const email = prompt('部門電郵：','new@lr.com.hk')||'';
+  DB.departments.push({id:DB.departments.length+1,code:code.toUpperCase(),name,parent:null,email,cc:''});
+  render(); toast('✅ 已新增部門 '+code.toUpperCase());
+}
+function editDept(id){
+  const d = DB.departments.find(x=>x.id===id);
+  const name = prompt('修改名稱：', d.name);
+  if(name) d.name = name;
+  const email = prompt('修改電郵：', d.email);
+  if(email) d.email = email;
+  render(); toast('✅ 已更新 '+d.code);
+}
+function addSubDept(parentId){
+  const code = prompt('細分部門代碼：');
+  if(!code) return;
+  const name = prompt('細分部門名稱：');
+  if(!name) return;
+  const email = prompt('部門電郵：','sub@lr.com.hk')||'';
+  DB.departments.push({id:DB.departments.length+1,code:code.toUpperCase(),name,parent:parentId,email,cc:'iecc@lr.com.hk'});
+  render(); toast('✅ 已新增細分部門 '+code.toUpperCase());
+}
+function viewEqAdmin(){
+  return `<div class="appbar"><button class="iconbtn" onclick="back()">‹</button>
+    <div style="flex:1"><h1>🔧 設備類別管理</h1><span class="sub">${DB.equipments.length} 個類別 · 可自訂</span></div>
+    <button class="iconbtn" onclick="addEq()">＋</button></div>
+  <div class="page"><div class="card"><div class="card-title">現有類別</div>
+    ${DB.equipments.map(e=>`<div class="toolrow"><div class="ic">${e.icon}</div>
+      <div class="tx"><b>${esc(e.name)}</b><span>代碼：${esc(e.code)}</span></div>
+      <span class="chev" onclick="event.stopPropagation();editEq(${e.id})">✏️</span></div>`).join('')}
+    </div><button class="btn outline" onclick="addEq()">＋ 新增設備類別</button></div>`;
+}
+function addEq(){
+  const code = prompt('新設備代碼（例：NEW）：');
+  if(!code) return;
+  const name = prompt('新設備名稱：');
+  if(!name) return;
+  const icon = prompt('圖示（Emoji）：','🔧')||'🔧';
+  DB.equipments.push({id:DB.equipments.length+1,code:code.toUpperCase(),name,icon});
+  render(); toast('✅ 已新增設備 '+name);
+}
+function editEq(id){
+  const e = DB.equipments.find(x=>x.id===id);
+  const name = prompt('修改名稱：', e.name);
+  if(name) e.name = name;
+  const icon = prompt('修改圖示：', e.icon);
+  if(icon) e.icon = icon;
+  render(); toast('✅ 已更新設備 '+e.name);
+}
+function viewStationAdmin(){
+  const zoneGroups = DB.zones.map(z=>{
+    const list = DB.stations.filter(s=>s.zone===z.id);
+    return `<div style="margin-bottom:14px">
+      <div style="font-size:12px;font-weight:800;color:var(--sub);margin-bottom:6px;
+        padding:6px 10px;background:linear-gradient(135deg,${z.from},${z.to});border-radius:8px">
+        ${z.icon} ${z.name} <span style="float:right;font-weight:700">${list.length} 站</span>
+      </div>
+      ${list.map(s=>`<div class="toolrow" style="padding:9px 0">
+        <div class="ic" style="background:#fdeef0;width:36px;height:36px;font-size:11px;
+          font-family:monospace;font-weight:800;color:var(--mtr-red)">${stationNum(s.id).replace('S','')}</div>
+        <div class="tx"><b style="font-size:12.5px">${stationNum(s.id)} ${esc(s.name)}</b>
+          <span>代碼 ${esc(s.code)} · 月台 1、2</span></div>
+        <span class="chev" onclick="event.stopPropagation();toast('✏️ 編輯 ${s.code}')">›</span></div>`).join('')}
+    </div>`;
+  }).join('');
+  return `<div class="appbar"><button class="iconbtn" onclick="back()">‹</button>
+    <div style="flex:1"><h1>🚉 車站月台管理</h1><span class="sub">${DB.stations.length} 站 · ${DB.stations.length*2} 月台</span></div>
+    <button class="iconbtn" onclick="toast('➕ 新增車站')">＋</button></div>
+  <div class="page"><div class="card" style="padding:12px">${zoneGroups}</div></div>`;
+}
+function viewUserAdmin(){
+  return `<div class="appbar"><button class="iconbtn" onclick="back()">‹</button>
+    <div style="flex:1"><h1>👤 帳戶資料管理</h1><span class="sub">${DB.users.length} 個帳戶</span></div>
+    <button class="iconbtn" onclick="toast('➕ 新增帳戶')">＋</button></div>
+  <div class="page">
+    ${DB.users.map(u=>`<div class="card" style="padding:13px">
+      <div class="row" style="gap:12px">
+        <div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#9a0d1e,#f7941d);
+          display:flex;align-items:center;justify-content:center;color:#fff;font-size:17px;font-weight:800;flex-shrink:0">${esc(u.name.charAt(0))}</div>
+        <div style="flex:1;min-width:0"><div style="font-size:13.5px;font-weight:800;margin-bottom:2px">${esc(u.name)}</div>
+          <div style="font-size:11px;color:var(--sub)">@${esc(u.user)} · ${esc(u.dept)}</div>
+          <div style="margin-top:6px"><span class="badge ${u.role==='admin'?'b-crit':u.role==='supervisor'?'b-prog':'b-low'}">
+            ${u.role==='admin'?'系統管理員':u.role==='supervisor'?'巡查主管':'巡查員'}</span></div></div>
+        <span class="chev" onclick="toast('✏️ 編輯 ${esc(u.name)}')">›</span></div>
+      <div class="divider"></div>
+      <div class="kv"><span>📧 電郵</span><span style="font-size:11px">${esc(u.email)}</span></div>
+    </div>`).join('')}
+    <button class="btn outline" onclick="toast('➕ 新增使用者帳戶')">＋ 新增帳戶</button></div>`;
+}
+function viewSettings(){
+  const u=S.currentUser;
+  return `<div class="appbar"><div style="flex:1"><h1>⚙️ 設定</h1><span class="sub">系統偏好與帳戶</span></div></div>
+  <div class="page">
+    <div class="card" style="text-align:center;padding:20px 14px">
+      <div style="width:64px;height:64px;border-radius:50%;margin:0 auto 11px;background:linear-gradient(135deg,#9a0d1e,#f7941d);
+        display:flex;align-items:center;justify-content:center;color:#fff;font-size:26px;font-weight:800">${esc(u.name.charAt(0))}</div>
+      <div style="font-size:16px;font-weight:800;margin-bottom:3px">${esc(u.name)}</div>
+      <div class="muted">${esc(u.dept)} · ${u.role==='admin'?'系統管理員':'巡查主管'}</div>
+      <div class="muted" style="margin-top:3px">${esc(u.email)}</div></div>
+    <div class="card"><div class="card-title">📸 匯報設定</div>
+      <div class="toolrow"><div class="ic">📍</div><div class="tx"><b>自動記錄 GPS</b><span>匯報時自動寫入座標</span></div>
+        <label class="switch"><input type="checkbox" ${DB.settings.autoGps?'checked':''} onchange="DB.settings.autoGps=this.checked;toast('已更新設定')"><span class="slider"></span></label></div>
+      <div class="toolrow"><div class="ic">🗜️</div><div class="tx"><b>壓縮相片</b><span>${DB.settings.photoQuality}</span></div>
+        <label class="switch"><input type="checkbox" ${DB.settings.compressPhoto?'checked':''} onchange="DB.settings.compressPhoto=this.checked;toast('已更新設定')"><span class="slider"></span></label></div>
+    </div>
+    <div class="card"><div class="card-title">📧 匯出設定</div>
+      <div class="toolrow" onclick="toast('📝 選擇 Email 範本')"><div class="ic">📝</div>
+        <div class="tx"><b>Email 範本</b><span>標準格式</span></div><span class="chev">›</span></div>
+      <div class="toolrow" onclick="toast('👥 管理預設副本收件人')"><div class="ic">👥</div>
+        <div class="tx"><b>預設副本收件人</b><span>iecc@lr.com.hk</span></div><span class="chev">›</span></div>
+    </div>
+    <div class="card"><div class="card-title">🎨 外觀與系統</div>
+      <div class="toolrow" onclick="toast('🌓 選擇主題')"><div class="ic">🌓</div>
+        <div class="tx"><b>主題</b><span>${DB.settings.theme}</span></div><span class="chev">›</span></div>
+      <div class="toolrow" onclick="toast('🌐 選擇語言')"><div class="ic">🌐</div>
+        <div class="tx"><b>語言</b><span>繁體中文</span></div><span class="chev">›</span></div>
+      <div class="toolrow" onclick="toast('ℹ️ LR Patrol Pro v1.1.0')"><div class="ic">ℹ️</div>
+        <div class="tx"><b>關於</b><span>版本 1.1.0 · 2026-02-14</span></div><span class="chev">›</span></div>
+    </div>
+    <button class="btn danger" onclick="doLogout()">🚪 登出帳戶</button>
+  </div>`;
+}
+function doLogout(){S.loggedIn=false;S.currentUser=null;S.tab='home';S.page=null;render();toast('已安全登出');}
+
+render();
+</script>
+</body>
+</html>

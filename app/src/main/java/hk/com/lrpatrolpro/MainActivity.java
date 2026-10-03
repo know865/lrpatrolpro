@@ -10,8 +10,11 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
+import android.provider.Settings;
+import android.util.Base64;
 import android.view.KeyEvent;
 import android.webkit.GeolocationPermissions;
+import android.webkit.JavascriptInterface;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
@@ -25,6 +28,7 @@ import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -37,8 +41,12 @@ public class MainActivity extends AppCompatActivity {
     private static final int PERM_REQ = 1001;
     private static final int FILE_CHOOSER_REQ = 2001;
     private static final int CAMERA_REQ = 2002;
+    private static final int MANAGE_STORAGE_REQ = 3001;
     private ValueCallback<Uri[]> filePathCallback;
-    private Uri cameraOutputUri;  // 相機輸出的檔案 URI
+    private Uri cameraOutputUri;
+
+    /* ✅ 匯出檔案存放的資料夾名稱（手機根目錄下） */
+    private static final String APP_FOLDER = "LRPatrolPro";
 
     @SuppressLint("SetJavaScriptEnabled")
     @Override
@@ -63,31 +71,26 @@ public class MainActivity extends AppCompatActivity {
         ws.setAllowFileAccessFromFileURLs(true);
         ws.setAllowUniversalAccessFromFileURLs(true);
 
-        webView.setWebChromeClient(new WebChromeClient() {
+        /* ✅ 註冊 JS 介面，讓 HTML 可以呼叫原生儲存 */
+        webView.addJavascriptInterface(new AndroidSaver(), "AndroidSaver");
 
+        webView.setWebChromeClient(new WebChromeClient() {
             @Override
-            public void onGeolocationPermissionsShowPrompt(String origin,
-                    GeolocationPermissions.Callback callback) {
+            public void onGeolocationPermissionsShowPrompt(String origin, GeolocationPermissions.Callback callback) {
                 callback.invoke(origin, true, false);
             }
 
             @Override
-            public boolean onShowFileChooser(WebView webView,
-                    ValueCallback<Uri[]> filePathCallback,
-                    FileChooserParams fileChooserParams) {
+            public boolean onShowFileChooser(WebView webView, ValueCallback<Uri[]> filePathCallback, FileChooserParams fileChooserParams) {
                 if (MainActivity.this.filePathCallback != null) {
                     MainActivity.this.filePathCallback.onReceiveValue(null);
                 }
                 MainActivity.this.filePathCallback = filePathCallback;
 
-                // ✅ 判斷是否使用 capture（拍照）
                 boolean capture = fileChooserParams.isCaptureEnabled();
-
                 if (capture) {
-                    // 直接打開相機
                     return openCamera();
                 } else {
-                    // 打開檔案選擇器（相簿）
                     try {
                         Intent intent = fileChooserParams.createIntent();
                         intent.addCategory(Intent.CATEGORY_OPENABLE);
@@ -95,8 +98,7 @@ public class MainActivity extends AppCompatActivity {
                         return true;
                     } catch (Exception e) {
                         MainActivity.this.filePathCallback = null;
-                        Toast.makeText(MainActivity.this,
-                                "無法開啟檔案選擇器", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(MainActivity.this, "無法開啟檔案選擇器", Toast.LENGTH_SHORT).show();
                         return false;
                     }
                 }
@@ -108,9 +110,7 @@ public class MainActivity extends AppCompatActivity {
         requestAllPermissions();
 
         webView.setOnKeyListener((v, keyCode, event) -> {
-            if (event.getAction() == KeyEvent.ACTION_DOWN
-                    && keyCode == KeyEvent.KEYCODE_BACK
-                    && webView.canGoBack()) {
+            if (event.getAction() == KeyEvent.ACTION_DOWN && keyCode == KeyEvent.KEYCODE_BACK && webView.canGoBack()) {
                 webView.goBack();
                 return true;
             }
@@ -118,16 +118,95 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    /* =========================================================
+       ✅ JS 介面：從 HTML 呼叫原生儲存檔案
+       目標路徑：/storage/emulated/0/LRPatrolPro/檔名
+       ========================================================= */
+    public class AndroidSaver {
+        @JavascriptInterface
+        public void saveFile(String filename, String base64Content, String mimeType) {
+            try {
+                /* 移除 Base64 可能的 data URL 前綴 */
+                String pureBase64 = base64Content;
+                if (pureBase64.contains(",")) {
+                    pureBase64 = pureBase64.substring(pureBase64.indexOf(",") + 1);
+                }
+                byte[] data = Base64.decode(pureBase64, Base64.DEFAULT);
+
+                /* 目標資料夾：手機根目錄/LRPatrolPro/ */
+                File targetDir = new File(Environment.getExternalStorageDirectory(), APP_FOLDER);
+                if (!targetDir.exists()) {
+                    targetDir.mkdirs();
+                }
+
+                File targetFile = new File(targetDir, filename);
+                FileOutputStream fos = new FileOutputStream(targetFile);
+                fos.write(data);
+                fos.flush();
+                fos.close();
+
+                final String path = targetFile.getAbsolutePath();
+                runOnUiThread(() -> Toast.makeText(MainActivity.this,
+                        "✅ 已儲存：\n" + path, Toast.LENGTH_LONG).show());
+            } catch (Exception e) {
+                final String err = e.getMessage();
+                runOnUiThread(() -> Toast.makeText(MainActivity.this,
+                        "❌ 儲存失敗：" + err, Toast.LENGTH_LONG).show());
+            }
+        }
+    }
+
+    /* =========================================================
+       權限
+       ========================================================= */
+    private void requestAllPermissions() {
+        List<String> perms = new ArrayList<>();
+        perms.add(Manifest.permission.CAMERA);
+        perms.add(Manifest.permission.ACCESS_FINE_LOCATION);
+        perms.add(Manifest.permission.ACCESS_COARSE_LOCATION);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            perms.add(Manifest.permission.READ_MEDIA_IMAGES);
+        } else if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.Q) {
+            perms.add(Manifest.permission.READ_EXTERNAL_STORAGE);
+            perms.add(Manifest.permission.WRITE_EXTERNAL_STORAGE);
+        }
+
+        List<String> need = new ArrayList<>();
+        for (String p : perms) {
+            if (ContextCompat.checkSelfPermission(this, p) != PackageManager.PERMISSION_GRANTED) {
+                need.add(p);
+            }
+        }
+        if (!need.isEmpty()) {
+            ActivityCompat.requestPermissions(this, need.toArray(new String[0]), PERM_REQ);
+        }
+
+        /* ✅ Android 11+ 需要 MANAGE_EXTERNAL_STORAGE 才能寫入根目錄 */
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            if (!Environment.isExternalStorageManager()) {
+                try {
+                    Intent intent = new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
+                    intent.setData(Uri.parse("package:" + getPackageName()));
+                    startActivityForResult(intent, MANAGE_STORAGE_REQ);
+                } catch (Exception e) {
+                    try {
+                        Intent intent = new Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION);
+                        startActivityForResult(intent, MANAGE_STORAGE_REQ);
+                    } catch (Exception e2) { /* 忽略 */ }
+                }
+            }
+        }
+    }
+
     private boolean openCamera() {
         try {
-            // 建立臨時檔案存放相片
             File photoDir = new File(getExternalFilesDir(Environment.DIRECTORY_PICTURES), "LRPatrol");
             if (!photoDir.exists()) photoDir.mkdirs();
 
             String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(new Date());
             File photoFile = new File(photoDir, "IMG_" + timeStamp + ".jpg");
-            cameraOutputUri = FileProvider.getUriForFile(this,
-                    "hk.com.lrpatrolpro.fileprovider", photoFile);
+            cameraOutputUri = FileProvider.getUriForFile(this, "hk.com.lrpatrolpro.fileprovider", photoFile);
 
             Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
             intent.putExtra(MediaStore.EXTRA_OUTPUT, cameraOutputUri);
@@ -137,62 +216,24 @@ public class MainActivity extends AppCompatActivity {
                 startActivityForResult(intent, CAMERA_REQ);
                 return true;
             } else {
-                // 沒有相機 App
-                if (filePathCallback != null) {
-                    filePathCallback.onReceiveValue(null);
-                    filePathCallback = null;
-                }
+                if (filePathCallback != null) { filePathCallback.onReceiveValue(null); filePathCallback = null; }
                 Toast.makeText(this, "此裝置無相機應用程式", Toast.LENGTH_SHORT).show();
                 return false;
             }
         } catch (Exception e) {
-            if (filePathCallback != null) {
-                filePathCallback.onReceiveValue(null);
-                filePathCallback = null;
-            }
+            if (filePathCallback != null) { filePathCallback.onReceiveValue(null); filePathCallback = null; }
             Toast.makeText(this, "開啟相機失敗：" + e.getMessage(), Toast.LENGTH_LONG).show();
             return false;
         }
     }
 
-    private void requestAllPermissions() {
-        List<String> perms = new ArrayList<>();
-        perms.add(Manifest.permission.CAMERA);
-        perms.add(Manifest.permission.ACCESS_FINE_LOCATION);
-        perms.add(Manifest.permission.ACCESS_COARSE_LOCATION);
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            perms.add(Manifest.permission.READ_MEDIA_IMAGES);
-        } else {
-            perms.add(Manifest.permission.READ_EXTERNAL_STORAGE);
-            perms.add(Manifest.permission.WRITE_EXTERNAL_STORAGE);
-        }
-
-        List<String> need = new ArrayList<>();
-        for (String p : perms) {
-            if (ContextCompat.checkSelfPermission(this, p)
-                    != PackageManager.PERMISSION_GRANTED) {
-                need.add(p);
-            }
-        }
-
-        if (!need.isEmpty()) {
-            ActivityCompat.requestPermissions(this,
-                    need.toArray(new String[0]), PERM_REQ);
-        }
-    }
-
     @Override
-    public void onRequestPermissionsResult(int requestCode,
-                                           @NonNull String[] permissions,
-                                           @NonNull int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == PERM_REQ) {
             for (int i = 0; i < permissions.length; i++) {
                 if (grantResults[i] != PackageManager.PERMISSION_GRANTED) {
-                    Toast.makeText(this,
-                            "部分權限未授予，拍照或定位功能可能受限",
-                            Toast.LENGTH_LONG).show();
+                    Toast.makeText(this, "部分權限未授予，部分功能可能受限", Toast.LENGTH_LONG).show();
                     break;
                 }
             }
@@ -203,7 +244,15 @@ public class MainActivity extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
-        // 相機結果
+        if (requestCode == MANAGE_STORAGE_REQ) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                if (!Environment.isExternalStorageManager()) {
+                    Toast.makeText(this, "未授予檔案管理權限，匯出檔案可能無法儲存", Toast.LENGTH_LONG).show();
+                }
+            }
+            return;
+        }
+
         if (requestCode == CAMERA_REQ) {
             if (filePathCallback != null) {
                 Uri[] results = null;
@@ -217,10 +266,8 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
 
-        // 檔案選擇結果
         if (requestCode == FILE_CHOOSER_REQ) {
             if (filePathCallback == null) return;
-
             Uri[] results = null;
             if (resultCode == Activity.RESULT_OK && data != null) {
                 if (data.getClipData() != null) {
@@ -240,10 +287,7 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onDestroy() {
-        if (webView != null) {
-            webView.destroy();
-            webView = null;
-        }
+        if (webView != null) { webView.destroy(); webView = null; }
         super.onDestroy();
     }
 }

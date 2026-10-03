@@ -964,6 +964,14 @@ function viewHome(){
     <button class="iconbtn" onclick="go('searchPage')" type="button">🔍</button>
   </div>
   <div class="page">
+    ${!window.AndroidSaver ? '' : `
+    <div class="card" style="background:#fff8e6;border:1.5px solid #ffe2a8">
+      <div style="font-size:12px;color:#8a6300;line-height:1.6">
+        <b>📁 匯出檔案儲存位置</b><br>
+        所有匯出檔案會存到：<br>
+        <code style="background:#fff;padding:2px 6px;border-radius:4px">手機/LRPatrolPro/</code>
+      </div>
+    </div>`}
     <div class="stats">
       <div class="stat"><div class="n">${total}</div><div class="l">總匯報數</div></div>
       <div class="stat s2"><div class="n">${open}</div><div class="l">待處理</div></div>
@@ -1981,6 +1989,32 @@ function viewData(){
   </div>`;
 }
 function downloadFile(filename, content, mime){
+  // ✅ 如果是在 Android App 內，用原生接口儲存到手機根目錄/LRPatrolPro/
+  if(window.AndroidSaver && typeof window.AndroidSaver.saveFile === 'function'){
+    try {
+      let base64;
+      if(typeof content === 'string'){
+        // 文字內容用 UTF-8 安全的 Base64 編碼
+        base64 = btoa(unescape(encodeURIComponent(content)));
+      } else if(content instanceof Blob){
+        // 若是 Blob，轉成 Base64（簡化：用 FileReader 同步處理）
+        const reader = new FileReader();
+        reader.onload = function(){
+          const dataUrl = reader.result;
+          window.AndroidSaver.saveFile(filename, dataUrl, mime);
+        };
+        reader.readAsDataURL(content);
+        return true;
+      } else {
+        base64 = String(content);
+      }
+      window.AndroidSaver.saveFile(filename, base64, mime);
+      return true;
+    } catch(e){
+      console.warn('AndroidSaver failed, fallback to browser download', e);
+    }
+  }
+  // Fallback：桌機瀏覽器 / 未在 App 內時
   try {
     const blob = new Blob([content], {type: mime});
     const url = URL.createObjectURL(blob);
